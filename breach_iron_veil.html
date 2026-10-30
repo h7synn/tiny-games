@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BREACH: Tactical FPS Prototype</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b0e;color:#e7edf0;font-family:Consolas,Monaco,monospace}
+#game{display:block;width:100vw;height:100vh;cursor:crosshair;background:#111}
+#hud{position:fixed;inset:0;pointer-events:none;text-shadow:0 2px 4px #000}
+.panel{background:linear-gradient(135deg,rgba(9,15,19,.88),rgba(9,15,19,.55));border:1px solid rgba(191,211,219,.28);padding:10px 13px;backdrop-filter:blur(4px)}
+#top{position:absolute;top:18px;left:18px;display:flex;gap:10px;align-items:flex-start}
+.kicker{font-size:10px;letter-spacing:2px;color:#8fa4ad}.big{font-size:18px;font-weight:bold;letter-spacing:1px}
+#mission{position:absolute;top:18px;right:18px;width:min(330px,43vw);line-height:1.5}
+#bottomleft{position:absolute;bottom:18px;left:18px;display:flex;gap:10px;align-items:end}
+.stat{min-width:95px}.label{font-size:10px;letter-spacing:1.5px;color:#92a5ad}.value{font-size:24px;font-weight:bold}.small{font-size:11px;color:#b7c3c8}
+#weapon{position:absolute;bottom:20px;right:20px;text-align:right;min-width:160px}
+#ammo{font-size:30px;font-weight:bold}.muted{color:#8b9ca3}
+#crosshair{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:22px;height:22px}
+#crosshair i{position:absolute;background:#dce9e8;box-shadow:0 0 3px #000}
+#crosshair i:nth-child(1){width:2px;height:7px;left:10px;top:0}#crosshair i:nth-child(2){width:2px;height:7px;left:10px;bottom:0}
+#crosshair i:nth-child(3){height:2px;width:7px;top:10px;left:0}#crosshair i:nth-child(4){height:2px;width:7px;top:10px;right:0}
+#hitmarker{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:25px;opacity:0;color:white}
+#toast{position:absolute;top:23%;left:50%;transform:translateX(-50%);font-size:13px;letter-spacing:2px;text-align:center;color:#dce7e7}
+#help{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);font-size:10px;color:#c1cdd0;background:rgba(0,0,0,.45);padding:7px 10px;white-space:nowrap}
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(22,32,37,.82),rgba(3,6,8,.97));z-index:5}
+.card{width:min(620px,92vw);padding:32px;border:1px solid #596c73;background:linear-gradient(145deg,#151e23,#080d10);box-shadow:0 20px 90px #000}
+.brand{font-size:12px;letter-spacing:4px;color:#b2c0c5}.title{font-size:clamp(34px,7vw,58px);line-height:.95;font-weight:900;letter-spacing:-2px;margin:12px 0}
+.title span{color:#c5a66d}.desc{color:#b5c2c7;line-height:1.65;font-size:13px;max-width:520px}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.tag{font-size:10px;border:1px solid #45565d;padding:6px 8px;color:#b6c4c8}
+button{font:inherit;color:#0b1114;background:#c5a66d;border:0;padding:14px 22px;font-weight:bold;letter-spacing:1.5px;cursor:pointer}button:hover{background:#e0c28b}
+.note{font-size:10px;color:#7f9299;line-height:1.6;margin-top:15px}
+#result{display:none}
+@media(max-width:600px){#help{white-space:normal;width:90%;text-align:center;font-size:9px}#mission{width:200px;font-size:11px}#top{top:10px;left:10px}#bottomleft{left:10px;bottom:55px}.panel{padding:7px 9px}.big{font-size:14px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+ <div id="top"><div class="panel"><div class="kicker">BREACH / TRAINING SIM</div><div class="big">OPERATION: IRON VEIL</div><div class="small">SECTOR 04 · INDUSTRIAL DISTRICT</div></div></div>
+ <div id="mission" class="panel"><div class="kicker">MISSION OBJECTIVE</div><div id="objective" class="big">Alana gir ve tehdidi etkisiz hale getir</div><div class="small" id="objsub">Düşmanlar canlı mühimmat kullanıyor. Siper al, kontrollü ateş et.</div><div style="height:7px"></div><div class="label">HOSTILE CONTACTS <span id="contacts" style="color:#d8b77a">04</span></div></div>
+ <div id="crosshair"><i></i><i></i><i></i><i></i></div><div id="hitmarker">×</div><div id="toast"></div>
+ <div id="bottomleft"><div class="panel stat"><div class="label">VITALS</div><div class="value" id="health">100</div><div class="small">HEALTH</div></div><div class="panel stat"><div class="label">STANCE</div><div class="value" id="stance" style="font-size:16px">STANDING</div><div class="small" id="speed">READY</div></div></div>
+ <div id="weapon" class="panel"><div class="label">PRIMARY / 5.56×45 MM</div><div class="big">M4A1 <span class="muted">| SEMI / AUTO</span></div><div id="ammo"><span id="mag">30</span><span class="muted" style="font-size:17px"> / <span id="reserve">90</span></span></div><div class="small" id="reloadtxt">RIFLE · 1× OPTIC</div></div>
+ <div id="help">WASD HAREKET · MOUSE NİŞAN · SOL TIK BASILI TUT: OTOMATİK ATEŞ · SAĞ TIK: ADS · SPACE: ZIPLA · R: ŞARJÖR · SHIFT: KOŞ · C: ÇÖMEL · ESC: DURAKLAT</div>
+</div>
+<div id="overlay"><div class="card" id="startcard">
+ <div class="brand">TACTICAL RESPONSE UNIT / 04</div><div class="title">BREACH<span>.</span><br>IRON VEIL</div>
+ <div class="desc">Tek oyunculu taktiksel FPS prototipi. Terk edilmiş bir endüstriyel tesise gir, düşman temaslarını temizle ve mühimmatını idareli kullan. Düşmanlar görüş hattına girdiklerinde ateş eder; hareket, siper ve nişan kontrolü hayatta kalmanın anahtarıdır.</div>
+ <div class="tags"><div class="tag">RAYCAST 3D</div><div class="tag">AI HOSTILES</div><div class="tag">HIT / RELOAD</div><div class="tag">MISSION STATE</div></div>
+ <button id="start">OPERASYONU BAŞLAT</button>
+ <div class="note">Klavye + fare önerilir. Bu, indirilebilir tek dosyalı bir prototiptir; ticari oyun ölçeğinde 3D model, animasyon ve çevrim içi sistemler içermez. Ses için oyun başladıktan sonra tıklama gerekir.</div>
+ </div>
+ <div class="card" id="result"><div class="brand">AFTER ACTION REPORT</div><div class="title" id="resulttitle">SEKTÖR TEMİZLENDİ<span>.</span></div><div class="desc" id="resultdesc"></div><div style="margin-top:22px"><button id="again">YENİDEN GÖREVLENDİR</button></div></div>
+</div>
+<script>
+(()=>{
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let W=innerWidth,H=innerHeight,playing=false,paused=false,over=false;
+function resize(){W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*Math.min(devicePixelRatio||1,1.5));canvas.height=Math.floor(H*Math.min(devicePixelRatio||1,1.5));ctx.setTransform(canvas.width/W,0,0,canvas.height/H,0,0)}addEventListener('resize',resize);resize();
+const map=[
+"################",
+"#..............#",
+"#..##.....##...#",
+"#..##.....##...#",
+"#..............#",
+"#....#.........#",
+"#....#..###....#",
+"#.......#......#",
+"#..###..#..##..#",
+"#..............#",
+"#.....##.......#",
+"#.....##..##...#",
+"#..............#",
+"#..##..........#",
+"#..............#",
+"################"
+];
+const cell=3.2,MW=map[0].length,MH=map.length;
+let player,enemies,keys={},zbuf=[],ammo,reserve,health,kills,shots,hits,reloading,reloadEnd,lastShot,damageFlash,weaponKick,hitTimer,toastTimer,toastText,elapsed,lastFrame,mouseDown=false,ads=false,flashTimer=0;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function wall(x,y){let mx=Math.floor(x/cell),my=Math.floor(y/cell);return mx<0||my<0||mx>=MW||my>=MH||map[my][mx]==='#'}
+function reset(){player={x:cell*1.8,y:cell*1.8,a:.15,pitch:0,walk:0,vx:0,vy:0,bob:0,ground:0,vertical:0,verticalV:0,recoil:0};mouseDown=false;ads=false;enemies=[
+{x:cell*6.5,y:cell*2.5,hp:100,alive:true,alert:false,cd:0,phase:1.1},
+{x:cell*12.5,y:cell*4.5,hp:100,alive:true,alert:false,cd:1.8,phase:2.2},
+{x:cell*4.5,y:cell*8.5,hp:100,alive:true,alert:false,cd:.7,phase:3.7},
+{x:cell*12.5,y:cell*12.5,hp:100,alive:true,alert:false,cd:2.4,phase:4.2}
+];ammo=30;reserve=90;health=100;kills=0;shots=0;hits=0;reloading=false;reloadEnd=0;lastShot=0;damageFlash=0;weaponKick=0;hitTimer=0;toastText='';toastTimer=0;elapsed=0;over=false;updateHud()}
+function say(s,t=2){toastText=s;toastTimer=t;document.getElementById('toast').textContent=s}
+function updateHud(){document.getElementById('health').textContent=Math.max(0,Math.ceil(health));document.getElementById('mag').textContent=ammo;document.getElementById('reserve').textContent=reserve;document.getElementById('contacts').textContent=String(enemies.filter(e=>e.alive).length).padStart(2,'0');document.getElementById('stance').textContent=keys['c']?'CROUCHED':player?.ground>0?'AIRBORNE':'STANDING';document.getElementById('speed').textContent=keys['shift']?'MOVING FAST':'READY';document.getElementById('reloadtxt').textContent=reloading?'RELOADING…':'RIFLE · 1× OPTIC'}
+function lineClear(x1,y1,x2,y2){let d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/.12);for(let i=1;i<n;i++){let t=i/n;if(wall(x1+(x2-x1)*t,y1+(y2-y1)*t))return false}return true}
+function reload(){if(!playing||reloading||ammo===30||reserve<=0)return;reloading=true;reloadEnd=performance.now()+1650;say('RELOADING — COVER!',1.4);updateHud()}
+function shoot(){if(!playing||paused||over||reloading)return;let now=performance.now();if(now-lastShot<(ads?105:125))return;lastShot=now;if(ammo<=0){say('MAGAZINE EMPTY — PRESS R',1.2);return}ammo--;shots++;weaponKick=Math.min(1,weaponKick+.42);flashTimer=.045;player.recoil=Math.min(.075,player.recoil+(ads?.006:.014));let move=Math.hypot(player.vx,player.vy);let spread=(keys['shift']?.085:keys['c']?.009:ads?.0035:.018)+(move>.2?Math.min(.025,move*.004):0)+(Math.random()-.5)*.006;
+let aim=player.a+(Math.random()-.5)*spread;
+let target=null,best=Infinity;
+for(const e of enemies){if(!e.alive)continue;let dx=e.x-player.x,dy=e.y-player.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-aim;while(ang>Math.PI)ang-=Math.PI*2;while(ang< -Math.PI)ang+=Math.PI*2;if(Math.abs(ang)<.07&&d<best&&lineClear(player.x,player.y,e.x,e.y)){target=e;best=d}}
+if(target){target.hp-=100;target.alert=true;hits++;hitTimer=.16;if(target.hp<=0){target.alive=false;kills++;say('HOSTILE DOWN',1.1);if(enemies.every(e=>!e.alive)){setTimeout(()=>finish(true),500)}}else say('HIT CONFIRMED',.5)}updateHud()}
+function finish(win){if(over)return;over=true;playing=false;document.exitPointerLock?.();document.getElementById('overlay').style.display='flex';document.getElementById('startcard').style.display='none';let r=document.getElementById('result');r.style.display='block';document.getElementById('resulttitle').innerHTML=win?'SEKTÖR TEMİZLENDİ<span>.</span>':'GÖREV BAŞARISIZ<span>.</span>';document.getElementById('resultdesc').textContent=`Operasyon süresi: ${Math.floor(elapsed/60)}:${String(Math.floor(elapsed%60)).padStart(2,'0')} · Etkisiz hale getirilen: ${kills}/4 · Atış: ${shots} · İsabet: ${hits}. ${win?'Tüm düşman temasları temizlendi. Alan güvenli.':'Operatör görev dışı kaldı. Yeniden hazırlanın.'}`}
+function raycast(angle){let sin=Math.sin(angle),cos=Math.cos(angle);let dist=0,hitX=0,hitY=0,side=0;const step=.035;for(;dist<26;dist+=step){let x=player.x+cos*dist,y=player.y+sin*dist;if(wall(x,y)){hitX=x;hitY=y;let fx=(x/cell)%1,fy=(y/cell)%1;side=(Math.abs(fx)<.06||Math.abs(fx-.0)<.06||Math.abs(fx-1)<.06)?0:1;break}}return {dist:Math.max(.01,dist),side,hitX,hitY}}
+function render(){
+ctx.fillStyle='#11191d';ctx.fillRect(0,0,W,H);
+let bob=(player.bob||0)*(ads?.22:1);let horizon=H*.49+(player.pitch||0)+Math.sin(player.walk*9)*bob*.45-(player.vertical||0)*H*.12;
+let sky=ctx.createLinearGradient(0,0,0,horizon);sky.addColorStop(0,'#10181d');sky.addColorStop(1,'#394247');ctx.fillStyle=sky;ctx.fillRect(0,0,W,horizon);
+let floor=ctx.createLinearGradient(0,horizon,0,H);floor.addColorStop(0,'#3b3e3b');floor.addColorStop(1,'#121718');ctx.fillStyle=floor;ctx.fillRect(0,horizon,W,H-horizon);
+for(let y=horizon+12;y<H;y+=Math.max(3,(y-horizon)*.12)){ctx.strokeStyle=`rgba(170,180,174,${.025+(y-horizon)/H*.06})`;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+const fov=ads?Math.PI/4.4:Math.PI/2.85,cols=Math.ceil(W/3);zbuf=new Array(cols);
+for(let i=0;i<cols;i++){let a=player.a+(i/cols-.5)*fov;let r=raycast(a);let d=r.dist*Math.cos(a-player.a);zbuf[i]=d;let wh=Math.min(H*1.5,(H*.83)/(d+.06));let top=horizon-wh/2;let shade=clamp(190-d*9-(r.side?28:0),38,150);let texture=(Math.floor(r.hitX*2)+Math.floor(r.hitY*2))%5===0;ctx.fillStyle=`rgb(${shade*.79|0},${shade*.88|0},${shade*.91|0})`;ctx.fillRect(i*3,top,3,wh);
+ctx.fillStyle=texture?'rgba(7,12,14,.35)':'rgba(7,12,14,.15)';ctx.fillRect(i*3,top,3,wh);
+if((Math.floor(r.hitX/cell)%4===0)&&i%18===0){ctx.fillStyle='rgba(12,18,20,.6)';ctx.fillRect(i*3,top+wh*.18,3,2)}
+ctx.fillStyle='rgba(6,10,12,.7)';ctx.fillRect(i*3,top+wh*.94,3,Math.max(1,wh*.06));
+}
+drawProps(horizon,fov,cols);drawEnemies(horizon,fov,cols);
+drawWeapon();if(flashTimer>0){ctx.fillStyle='rgba(255,222,154,.85)';ctx.beginPath();ctx.moveTo(W*.55,H*.78);ctx.lineTo(W*.585,H*.72);ctx.lineTo(W*.575,H*.8);ctx.closePath();ctx.fill()}if(damageFlash>0){ctx.fillStyle=`rgba(140,18,12,${damageFlash*.22})`;ctx.fillRect(0,0,W,H)}
+}
+function project(x,y){let dx=x-player.x,dy=y-player.y,d=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-player.a;while(ang>Math.PI)ang-=Math.PI*2;while(ang< -Math.PI)ang+=Math.PI*2;return {d,ang,sx:W/2+Math.tan(ang)/(Math.tan(Math.PI/5.7))*W/2}}
+function drawProps(horizon,fov,cols){for(let y=0;y<MH;y++)for(let x=0;x<MW;x++){if(map[y][x]!=='#')continue;let px=(x+.5)*cell,py=(y+.5)*cell;let p=project(px,py);if(Math.abs(p.ang)>fov*.62||p.d<.4)continue;let col=Math.floor(p.sx/3);if(col<0||col>=cols||p.d>zbuf[col]+.3)continue;
+if((x+y)%7===0){let size=clamp(140/p.d,3,28);ctx.fillStyle='#6e7777';ctx.fillRect(p.sx-size/2,horizon-size*1.4,size,size*1.4);ctx.fillStyle='#171e20';ctx.fillRect(p.sx-size*.3,horizon-size*1.1,size*.6,size*.25)}
+}}
+function drawEnemies(horizon,fov,cols){for(const e of enemies){if(!e.alive)continue;let p=project(e.x,e.y);if(Math.abs(p.ang)>fov*.6||p.d<.25)continue;let col=clamp(Math.floor(p.sx/3),0,cols-1);if(p.d>zbuf[col]+.2)continue;let size=Math.min(H*1.2,H*.9/(p.d+.15)),w=size*.38,h=size*.88,x=p.sx-w/2,y=horizon-h*.52;
+ctx.save();ctx.translate(p.sx,y);let dark=p.d>8;
+ctx.fillStyle=dark?'#242d30':'#303a3c';ctx.fillRect(-w*.24,h*.27,w*.48,h*.52);
+ctx.fillStyle='#111719';ctx.fillRect(-w*.32,h*.68,w*.22,h*.31);ctx.fillRect(w*.1,h*.68,w*.22,h*.31);
+ctx.fillStyle='#515c5c';ctx.fillRect(-w*.38,h*.32,w*.16,h*.34);ctx.fillRect(w*.22,h*.32,w*.16,h*.34);
+ctx.fillStyle='#9b8c76';ctx.beginPath();ctx.arc(0,h*.17,w*.2,0,Math.PI*2);ctx.fill();
+ctx.fillStyle='#1c2528';ctx.fillRect(-w*.22,h*.07,w*.44,h*.12);ctx.fillStyle='#a68d68';ctx.fillRect(-w*.22,h*.11,w*.44,h*.035);
+ctx.fillStyle='#111719';ctx.fillRect(w*.05,h*.42,w*.56,h*.045);ctx.fillRect(w*.5,h*.4,w*.14,h*.08);
+if(e.alert){ctx.fillStyle='#d55c4c';ctx.fillRect(-2,-h*.08,4,4)}
+if(e.hp<100){ctx.fillStyle='#080b0c';ctx.fillRect(-w*.4,-h*.14,w*.8,4);ctx.fillStyle='#bd5147';ctx.fillRect(-w*.4,-h*.14,w*.8*(e.hp/100),4)}
+ctx.restore();
+}}
+function drawWeapon(){let cx=W*.5+(player.swayX||0)*(ads?.2:1),base=H*.9+kickY()+(player.swayY||0)*(ads?.2:1);ctx.save();ctx.translate(cx,base);ctx.scale(ads?.72:1,ads?.82:1);ctx.fillStyle='#121719';ctx.beginPath();ctx.moveTo(-W*.13,H*.16);ctx.lineTo(-W*.09,-H*.06);ctx.lineTo(-W*.035,-H*.12);ctx.lineTo(W*.03,-H*.11);ctx.lineTo(W*.1,-H*.035);ctx.lineTo(W*.15,H*.16);ctx.closePath();ctx.fill();
+ctx.fillStyle='#323a3b';ctx.beginPath();ctx.moveTo(-W*.055,-H*.07);ctx.lineTo(W*.055,-H*.07);ctx.lineTo(W*.085,H*.13);ctx.lineTo(-W*.09,H*.13);ctx.closePath();ctx.fill();
+ctx.fillStyle='#111719';ctx.fillRect(-W*.018,-H*.16,W*.036,H*.13);ctx.fillStyle='#697371';ctx.fillRect(-W*.008,-H*.17,W*.016,H*.035);ctx.fillStyle='#242c2d';ctx.fillRect(-W*.11,H*.015,W*.22,H*.04);
+ctx.fillStyle='#0a0d0f';ctx.fillRect(-W*.045,H*.06,W*.09,H*.13);ctx.fillStyle='#454c4a';ctx.fillRect(-W*.036,H*.075,W*.072,H*.085);
+if(reloading){ctx.translate(0,H*.08);ctx.rotate(.12)}ctx.restore()}
+function kickY(){return weaponKick*H*.055+(player.vertical||0)*-H*.035}
+function update(dt,now){if(!playing||paused||over)return;elapsed+=dt;player.walk+=dt;let maxSpeed=keys.shift?4.25:keys.c?1.45:2.75;let ix=0,iy=0;if(keys.w)iy+=1;if(keys.s)iy-=1;if(keys.a)ix-=1;if(keys.d)ix+=1;let il=Math.hypot(ix,iy)||1;ix/=il;iy/=il;let forward=Math.cos(player.a)*iy-Math.sin(player.a)*ix,side=Math.sin(player.a)*iy+Math.cos(player.a)*ix;let targetVX=forward*maxSpeed,targetVY=side*maxSpeed;let accel=(ix||iy)?(player.ground>0?12:7):10;let blend=1-Math.exp(-accel*dt);player.vx+=(targetVX-player.vx)*blend;player.vy+=(targetVY-player.vy)*blend;let nx=player.x+player.vx*dt,ny=player.y+player.vy*dt;if(!wall(nx,player.y)&&!enemyNear(nx,player.y))player.x=nx;else player.vx=0;if(!wall(player.x,ny)&&!enemyNear(player.x,ny))player.y=ny;else player.vy=0;let moving=Math.hypot(player.vx,player.vy);player.bob+=(Math.min(moving,4.5)*.9-player.bob)*(1-Math.exp(-6*dt));player.swayX=Math.sin(player.walk*5.5)*Math.min(8,moving*1.7);player.swayY=Math.abs(Math.cos(player.walk*5.5))*Math.min(5,moving*1.2);if(player.ground>0){player.ground=Math.max(0,player.ground-dt);player.vertical=Math.max(0,player.vertical+player.verticalV*dt);player.verticalV-=8*dt;if(player.vertical<=0){player.vertical=0;player.verticalV=0}}player.recoil*=Math.exp(-5*dt);player.a+=Math.sin(player.walk*9)*0;if(mouseDown&&!ads)shoot();
+
+if(reloading&&now>reloadEnd){let n=Math.min(30-ammo,reserve);ammo+=n;reserve-=n;reloading=false;say('MAGAZINE SEATED',.8);updateHud()}
+for(const e of enemies){if(!e.alive)continue;let d=Math.hypot(e.x-player.x,e.y-player.y);if(d<10&&lineClear(e.x,e.y,player.x,player.y))e.alert=true;if(e.alert&&d>2.8&&d<12){let a=Math.atan2(player.y-e.y,player.x-e.x);let nx=e.x+Math.cos(a)*.22*dt,ny=e.y+Math.sin(a)*.22*dt;if(!wall(nx,e.y))e.x=nx;if(!wall(e.x,ny))e.y=ny}
+e.cd-=dt;if(e.alert&&d<11&&lineClear(e.x,e.y,player.x,player.y)&&e.cd<=0){e.cd=1.15+Math.random()*1.25;if(Math.random()<(keys.c?.18:.36)){health-=keys.c?3:6;damageFlash=.7;say('TAKING FIRE — FIND COVER',.6);if(health<=0){health=0;updateHud();finish(false)}}}}
+damageFlash=Math.max(0,damageFlash-dt*1.8);weaponKick=Math.max(0,weaponKick-dt*3.8);flashTimer=Math.max(0,flashTimer-dt); hitTimer=Math.max(0,hitTimer-dt);document.getElementById('hitmarker').style.opacity=hitTimer>0?1:0;toastTimer-=dt;if(toastTimer<=0)document.getElementById('toast').textContent='';updateHud()}
+function enemyNear(x,y){return enemies.some(e=>e.alive&&Math.hypot(e.x-x,e.y-y)<.5)}
+let lastMouse=0;
+document.addEventListener('keydown',e=>{let k=e.key.toLowerCase();keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(k===' '&&playing&&!paused&&player.ground===0){player.ground=.48;player.vertical=.03;player.verticalV=3.3;player.bob+=2}if(k==='r')reload();if(k==='escape'&&playing){paused=!paused;if(paused){document.exitPointerLock?.();say('PAUSED — ESC TO RESUME',1000)}else{say('RESUME',.6);canvas.requestPointerLock?.()}}});
+document.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+canvas.addEventListener('click',()=>{if(playing&&!paused&&document.pointerLockElement!==canvas)canvas.requestPointerLock?.()});
+document.addEventListener('mousemove',e=>{if(playing&&!paused&&document.pointerLockElement===canvas){player.a+=e.movementX*(ads?.00125:.0021);player.pitch=clamp(player.pitch+e.movementY*(ads?.105:.16),-H*.22,H*.22)}});
+document.addEventListener('mousedown',e=>{if(e.button===0&&playing&&!paused&&document.pointerLockElement===canvas)mouseDown=true;if(e.button===2&&playing&&!paused){ads=true;e.preventDefault()}});document.addEventListener('mouseup',e=>{if(e.button===0)mouseDown=false;if(e.button===2)ads=false});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+document.getElementById('start').onclick=()=>{reset();playing=true;paused=false;document.getElementById('overlay').style.display='none';canvas.requestPointerLock?.();say('MOVE IN. CHECK YOUR CORNERS.',2)};
+document.getElementById('again').onclick=()=>{document.getElementById('result').style.display='none';document.getElementById('startcard').style.display='block';document.getElementById('overlay').style.display='flex';reset()};
+let previous=performance.now();function loop(now){let dt=Math.min(.05,(now-previous)/1000);previous=now;if(playing&&!paused)update(dt,now);render();requestAnimationFrame(loop)}
+reset();requestAnimationFrame(loop);
+})();
+</script>
+</body></html>
