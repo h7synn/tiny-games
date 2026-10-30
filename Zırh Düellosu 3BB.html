@@ -1,0 +1,2247 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Zırh Düellosu 3B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+/* Yerleşim: solda 3B sahne, sağda radar, vuruş raporu ve modül durumu; dar ekranda alt alta */
+:root{
+  --bg:#0f1214;
+  --panel:#161b1e;
+  --line:#2a3337;
+  --ink:#dde1d3;
+  --mute:#89938a;
+  --amber:#e3a93b;
+  --red:#da5640;
+  --green:#86b36a;
+  --steel:#5d6d73;
+  --f-disp:'Chakra Petch','Arial Narrow',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:13px/1.45 var(--f-mono);padding-inline:16px;padding-block:12px 28px;max-width:1500px;margin-inline:auto}
+button,select{font:inherit;color:inherit}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-bottom:10px}
+.top h1{font:700 22px/1 var(--f-disp);letter-spacing:.06em;text-transform:uppercase;margin:0;margin-right:auto}
+.top h1 small{display:block;font:400 11px/1.4 var(--f-mono);letter-spacing:.02em;text-transform:none;color:var(--mute);margin-top:5px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--panel);border:1px solid var(--line);padding:6px 11px;border-radius:3px;cursor:pointer;min-height:32px}
+.btn:hover{border-color:var(--steel)}
+.btn:focus-visible,select:focus-visible,.ammo button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.btn[aria-pressed="true"]{border-color:var(--amber);color:var(--amber)}
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:14px;align-items:start}
+.view{position:relative;border:1px solid var(--line);background:#0b0e10;border-radius:3px;overflow:hidden;touch-action:none;aspect-ratio:16/9;width:100%}
+#c,#ov{position:absolute;inset:0;width:100%;height:100%;display:block}
+#ov{pointer-events:none}
+#c{cursor:crosshair}
+.hud{position:absolute;pointer-events:none;font-size:12px}
+.hud *{pointer-events:auto}
+#hudTL{left:10px;top:10px;display:flex;flex-direction:column;gap:6px;min-width:170px}
+.ammo{display:flex;gap:4px}
+.ammo button{flex:1;background:rgba(15,18,20,.88);border:1px solid var(--line);padding:5px 7px;border-radius:3px;cursor:pointer;text-align:left;line-height:1.2}
+.ammo button b{display:block;font:600 15px var(--f-disp);color:var(--ink)}
+.ammo button span{color:var(--mute);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+.ammo button[aria-pressed="true"]{border-color:var(--amber);background:linear-gradient(rgba(227,169,59,.2),rgba(227,169,59,.2)),rgba(15,18,20,.88)}
+.rl{height:6px;background:rgba(15,18,20,.78);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.rl i{display:block;height:100%;width:0;background:var(--amber)}
+#rpBtn{pointer-events:auto;margin-top:4px;font-size:11px;padding:3px 8px;min-height:0;text-align:left;background:rgba(15,18,20,.78)}
+#rpBtn.ready{border-color:var(--green);color:var(--green)}
+#rpBtn.work{border-color:var(--amber);color:var(--amber)}
+.rlTxt{color:var(--ink);font-size:10px;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;gap:8px;background:rgba(15,18,20,.78);padding:2px 6px;margin-top:3px;border-radius:2px}
+#hudTR{right:10px;top:10px;text-align:right;background:rgba(15,18,20,.85);border:1px solid var(--line);padding:6px 9px;border-radius:3px;line-height:1.5}
+#hudTR b{font:600 20px var(--f-disp);color:var(--amber);display:block;line-height:1.1}
+#hudTR span{color:var(--mute);font-size:10px;letter-spacing:.06em;text-transform:uppercase}
+#hudBL{left:10px;bottom:10px;display:flex;flex-direction:column;gap:3px;max-width:62%}
+#hudBL div{background:rgba(15,18,20,.85);padding:2px 7px;border-left:2px solid var(--amber);font-size:11px}
+#hudBR{right:10px;bottom:10px;text-align:right;background:rgba(15,18,20,.78);border:1px solid var(--line);padding:5px 9px;border-radius:3px;font-size:11px;line-height:1.5}
+#hudBR b{font:600 15px var(--f-disp);color:var(--ink)}
+#hint{inset:0;display:flex;align-items:center;justify-content:center}
+#hint div{background:rgba(15,18,20,.82);border:1px solid var(--line);padding:10px 16px;border-radius:3px;text-align:center;max-width:86%;color:var(--mute);font-size:12px}
+#hint b{color:var(--amber);font-family:var(--f-disp);letter-spacing:.06em;text-transform:uppercase}
+#banner{inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,12,14,.55)}
+#banner.on{display:flex}
+#banner .box{background:var(--panel);border:1px solid var(--line);padding:18px 24px;text-align:center;max-width:90%;border-radius:3px}
+#banner h2{margin:0 0 4px;font:700 24px var(--f-disp);letter-spacing:.05em;text-transform:uppercase;text-wrap:balance}
+#banner p{margin:0 0 12px;color:var(--mute)}
+#flash{inset:0;background:radial-gradient(ellipse at center,rgba(218,86,64,0) 40%,rgba(218,86,64,.55) 100%);opacity:0;pointer-events:none}
+.touch{display:none;position:absolute;left:0;right:0;bottom:0;gap:8px;padding:8px;flex-wrap:wrap;justify-content:space-between;pointer-events:none}
+.touch .grp{display:flex;gap:8px;pointer-events:none}
+.touch .btn{pointer-events:auto;min-width:56px;min-height:44px;padding:8px;text-align:center;user-select:none;-webkit-user-select:none;background:rgba(22,27,30,.8)}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec{border:1px solid var(--line);background:var(--panel);border-radius:3px;min-width:0}
+.sec>h2{margin:0;padding:7px 10px;font:600 11px/1 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+#rd{display:block;width:100%;height:auto;aspect-ratio:350/230;background:#0c1012}
+#log{list-style:none;margin:0;padding:0;max-height:300px;overflow-y:auto}
+#log li{padding:8px 10px;border-bottom:1px solid var(--line);font-size:11.5px}
+#log li:last-child{border-bottom:0}
+#log .hd{font:600 12px var(--f-disp);letter-spacing:.05em;text-transform:uppercase;display:flex;justify-content:space-between;gap:8px}
+#log .hd em{text-transform:none;font-style:normal;font-family:var(--f-mono);font-weight:400;font-size:11px}
+#log .ln{color:var(--mute)}
+#log .dm{color:var(--red)}
+#log .empty{color:var(--mute)}
+.o-pen{color:var(--red)}.o-def{color:var(--green)}.o-ric{color:var(--amber)}
+.st{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.st>div{padding:8px 10px;min-width:0}
+.st>div+div{border-left:1px solid var(--line)}
+.st h3{margin:0 0 5px;font:600 12px var(--f-disp);letter-spacing:.05em;text-transform:uppercase;overflow-wrap:anywhere}
+.chips{display:flex;flex-wrap:wrap;gap:3px}
+.chip{font-size:10.5px;padding:1px 5px;border:1px solid var(--line);border-radius:2px;color:var(--mute);display:inline-flex;gap:4px;align-items:center}
+.chip::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--green)}
+.chip.hurt::before{background:var(--amber)}
+.chip.dead{color:var(--red);border-color:#5a2a22}
+.chip.dead::before{background:var(--red)}
+.fireflag{margin-top:5px;color:var(--red);font-size:11px}
+.note{padding:9px 10px;font-size:11.5px;color:var(--mute)}
+.note p{margin:0 0 6px}
+.note summary{cursor:pointer;color:var(--ink);font:600 11px var(--f-disp);letter-spacing:.1em;text-transform:uppercase}
+.keys{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--mute);font-size:11.5px}
+.keys kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;padding:0 5px;border-radius:2px;color:var(--ink);background:var(--panel)}
+@media (max-width:960px){
+  .stage{grid-template-columns:minmax(0,1fr)}
+  .touch{display:flex}
+  .keys{display:none}
+}
+@media (max-width:560px){
+  .view{aspect-ratio:4/3}
+  #hudTL{min-width:0;left:6px;top:6px}
+  .ammo button span{display:none}
+  #hudTR{right:6px;top:6px;padding:4px 7px}
+  #hudTR b{font-size:16px}
+  #hudBR{display:none}
+  #hudBL{bottom:58px}
+  .touch{flex-wrap:nowrap;gap:6px;padding:6px}
+  .touch .grp{gap:5px}
+  .touch .btn{min-width:40px;min-height:38px;padding:4px 6px;font-size:12px}
+  .st{grid-template-columns:1fr}
+  .st>div+div{border-left:0;border-top:1px solid var(--line)}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<header class="top" lang="tr">
+  <h1>Zırh Düellosu 3B<small>Gerçek geometri üzerinde zırh delme, sekme, kıymık ve mühimmat patlaması</small></h1>
+  <div class="ctl">
+    <label for="tankSel" style="color:var(--mute)">Tankın</label>
+    <select id="tankSel" class="btn"><option value="t90">T-90A (Rusya)</option><option value="t72">T-72B (Rusya)</option><option value="t55">T-55AM (Rusya, eski)</option><option value="m1">M1A2 Abrams (ABD)</option><option value="leo">Leopard 2A7 (Almanya)</option><option value="ch2">Challenger 2 (İngiltere)</option><option value="lec">Leclerc (Fransa)</option></select>
+    <label for="enemySel" style="color:var(--mute)">Düşman</label>
+    <select id="enemySel" class="btn"><option value="mix">Karışık</option><option value="t90">T-90A</option><option value="t72">T-72B</option><option value="t55">T-55AM</option><option value="m1">M1A2 Abrams</option><option value="leo">Leopard 2A7</option><option value="ch2">Challenger 2</option><option value="lec">Leclerc</option></select>
+    <label for="diff" style="color:var(--mute)">Zorluk</label>
+    <select id="diff" class="btn"><option value="0">Kolay</option><option value="1" selected>Normal</option><option value="2">Zor</option></select>
+    <button id="btnX" class="btn" aria-pressed="false" title="X">Zırh röntgeni</button>
+    <button id="btnNew" class="btn">Yeni savaş</button>
+  </div>
+</header>
+
+<main class="stage" lang="tr">
+  <div>
+    <div class="view" id="view">
+      <canvas id="c" aria-label="3B savaş alanı"></canvas>
+      <canvas id="ov"></canvas>
+      <div class="hud" id="flash"></div>
+      <div class="hud" id="hudTL">
+        <div class="ammo" id="ammo">
+          <button data-ammo="ap" aria-pressed="true"><span>1 · APFSDS</span><b id="amAp">16</b></button>
+          <button data-ammo="heat" aria-pressed="false"><span>2 · HEAT</span><b id="amHeat">10</b></button>
+          <button data-ammo="he" aria-pressed="false"><span>3 · HE-FRAG</span><b id="amHe">8</b></button>
+        </div>
+        <div><div class="rl"><i id="rlBar"></i></div><div class="rlTxt"><span id="rlTxt">Hazır</span><span id="gunTxt"></span></div><button class="btn" id="rpBtn" type="button">Tamir (R)</button></div>
+      </div>
+      <div class="hud" id="hudTR"><span id="enName">Hedef</span><b id="rng">— m</b><span id="enState"></span></div>
+      <div class="hud" id="hudBL"></div>
+      <div class="hud" id="hudBR"><span>Dalga</span> <b id="wave">1</b> · <span>Vurulan</span> <b id="kills">0</b><br><span>Hız</span> <b id="spd">0</b> km/h</div>
+      <div class="hud" id="hint"><div><b>Başlamak için tıkla</b><br>Fare kilitlenirse namlu fareyi izler. Kilitlenmezse fareyi merkezden uzaklaştırarak döndür. Nişangâh: Shift, C veya sağ tık.</div></div>
+      <div class="hud" id="banner"><div class="box"><h2 id="bnH"></h2><p id="bnP"></p><button class="btn" id="bnBtn">Devam</button></div></div>
+      <div class="touch" id="touch">
+        <div class="grp"><button class="btn" data-hold="fwd">▲</button><button class="btn" data-hold="left">◀</button><button class="btn" data-hold="right">▶</button><button class="btn" data-hold="back">▼</button></div>
+        <div class="grp"><button class="btn" data-act="ammo">Mermi</button><button class="btn" data-act="sight">Dürbün</button><button class="btn" data-hold="fire" style="color:var(--amber)">ATEŞ</button></div>
+      </div>
+    </div>
+    <div class="keys">
+      <span><kbd>W</kbd> <kbd>S</kbd> ileri/geri</span>
+      <span><kbd>A</kbd> <kbd>D</kbd> gövdeyi çevir</span>
+      <span>Fare: kamera ve nişan (balistik bilgisayar menzile göre namluyu kaldırır)</span>
+      <span><kbd>Boşluk</kbd> / tık: ateş</span>
+      <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> mermi</span>
+      <span><kbd>Shift</kbd> basılı tut, <kbd>C</kbd> veya sağ tık: nişangâh (içindeyken ateş edilir)</span>
+      <span><kbd>R</kbd> tamir (90 sn'de bir, 8 sn sürer; hareket ya da ateş iptal eder)</span>
+      <span><kbd>X</kbd> zırh röntgeni</span>
+      <span><kbd>Esc</kbd> fareyi bırak</span>
+    </div>
+  </div>
+  <aside class="side">
+    <section class="sec"><h2><span>Radar</span><span id="rdTag">420 m</span></h2><canvas id="rd" width="700" height="460"></canvas></section>
+    <section class="sec"><h2><span>Zırh ve hasar günlüğü</span></h2><ol id="log"><li class="empty">Henüz isabet yok.</li></ol></section>
+    <section class="sec"><h2><span>Mürettebat ve modüller</span></h2><div class="st"><div><h3 id="stPn">T-90A</h3><div class="chips" id="stP"></div><div class="fireflag" id="fP"></div></div><div><h3 id="stEn">Hedef</h3><div class="chips" id="stE"></div><div class="fireflag" id="fE"></div></div></div></section>
+    <section class="sec"><details class="note"><summary>Model notları</summary>
+      <p>Her zırh parçası, ekranda gördüğün kutuyla aynıdır. Mermi bu kutulardan gerçek yolunu izleyerek geçer. Etkili kalınlık, ışının kutu içindeki yolu ile malzeme eşdeğerinin çarpımıdır, yani yatık plaka kalınlaşır. Çok yatık açıda mermi seker.</p>
+      <p>Delen mermi kalan penetrasyonuyla içeri girer, modüllere çarpar ve kıymık yayar. Karusel ve kule arkası mühimmat patlarsa kule fırlar. Batı tanklarının yalıtımlı bölmesi patlasa da tankı yok etmez ama genelde yangın ve kayıp çıkar. Mürettebattan biri ölürse tank durmaz: nişancı ölünce komutan nişan alır (yavaş ve sapmalı), sürücü ölünce başkası kullanır (yavaş), yaralı mürettebat işi yavaşlatır. Tamir ekibi 90 saniyede bir gelir: palet, top, nişangâh, motor ve yaralıları onarır, yangını söndürür. Her tankın gövde ölçeği, top uzunluğu, mermi hızı ve penetrasyonu, zırhı ve hızı farklıdır. ERA blokları HEAT'i çok, kinetiği az keser ve bir kez kullanılır.</p>
+      <p>Sayılar kamuya açık tahminlerden türetilmiş oyun değerleridir, gerçek zırh verisi değildir. Şehirdeki binalar paneller halinde yıkılır: APFSDS duvarları delip geçer (az hız kaybıyla), HEAT ve HE temasta patlar, desteği kalmayan üst katlar çöker. Enkaz yığınları, araçlar ve lambalar yalnızca görseldir.</p>
+    </details></section>
+  </aside>
+</main>
+<script>
+'use strict';
+/* ================= 3B Zırh Düellosu: fizik ve hasar motoru =================
+   Eksenler: +X sağ, +Y yukarı, +Z ileri. Birim metre.
+   Her zırh bloğu görünen modelle aynı kutudur; sayılar "mm RHA eşdeğeri / normal" olarak
+   verilir, motor bunları metre başına eşdeğere çevirir. Etkili kalınlık = ışının blok içindeki
+   gerçek yolu x eşdeğer. Açı, sekme ve ERA gerçek yüzey normalinden hesaplanır. */
+const G = 9.81, DEG = Math.PI / 180;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a, b) => (b === undefined ? Math.random() * a : a + Math.random() * (b - a));
+const gauss = () => { let u = 0; while (!u) u = Math.random(); const v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+const vadd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const vmul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vdot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const vcross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vlen = a => Math.hypot(a[0], a[1], a[2]);
+const vnorm = a => { const l = vlen(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+/* mat3: satır öncelikli, sütunlar taban vektörleri */
+const mmul = (A, B) => {
+  const r = new Array(9);
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) r[i * 3 + j] = A[i * 3] * B[j] + A[i * 3 + 1] * B[3 + j] + A[i * 3 + 2] * B[6 + j];
+  return r;
+};
+const mv = (A, v) => [A[0] * v[0] + A[1] * v[1] + A[2] * v[2], A[3] * v[0] + A[4] * v[1] + A[5] * v[2], A[6] * v[0] + A[7] * v[1] + A[8] * v[2]];
+const mtv = (A, v) => [A[0] * v[0] + A[3] * v[1] + A[6] * v[2], A[1] * v[0] + A[4] * v[1] + A[7] * v[2], A[2] * v[0] + A[5] * v[1] + A[8] * v[2]];
+const rotY = a => { const c = Math.cos(a), s = Math.sin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
+const rotX = a => { const c = Math.cos(a), s = Math.sin(a); return [1, 0, 0, 0, c, -s, 0, s, c]; };
+const basis = (r, u, f) => [r[0], u[0], f[0], r[1], u[1], f[1], r[2], u[2], f[2]];
+
+/* ======================= Mermi türleri ======================= */
+const SHELL = {
+  ap:   { name: 'APFSDS', v0: 1700, c: 1.0e-4, pen0: 520, ricoDeg: 70, color: 0xf2d27a },
+  heat: { name: 'HEAT',   v0: 900,  c: 2.4e-4, pen0: 600, ricoDeg: 77, color: 0xff9b5a },
+  he:   { name: 'HE-FRAG', v0: 850, c: 2.4e-4, pen0: 45,  ricoDeg: 90, color: 0xc9d1c0 }
+};
+
+/* ======================= Tank şablonları ======================= */
+const SPECS = {
+  t90:  { name: 'T-90A', nat: 'Rusya', crewN: 3, mass: 46.5, reload: 6.0, hw: 1.15, glacis: [420, 640], nose: [100, 160], cheek: [560, 780], mant: [260, 300], side: [80, 90], era: true, auto: 'carousel', loader: false, bustle: 'rack', turBack: -1.4, turFront: 1.5, color: 0x5d6b47, eps: [-6, 14], sc: 1, bar: 4.2, ca: 22, vmax: 13, vrev: 5, acc: 3.6, hammo: 'isolated', g: { ap: [1700, 520], heat: [900, 600] } },
+  t72:  { name: 'T-72B', nat: 'Rusya', crewN: 3, mass: 44.5, reload: 7.0, hw: 1.15, glacis: [340, 520], nose: [80, 120], cheek: [420, 600], mant: [220, 260], side: [70, 80], era: false, auto: 'carousel', loader: false, bustle: 'rack', turBack: -1.4, turFront: 1.5, color: 0x6a6c48, eps: [-5, 13], sc: 1, bar: 4.2, ca: 22, vmax: 12.5, vrev: 5, acc: 3.4, hammo: 'isolated', g: { ap: [1700, 480], heat: [900, 560] } },
+  t55:  { name: 'T-55AM', nat: 'Rusya (eski)', crewN: 4, mass: 36.0, reload: 8.0, hw: 1.1, glacis: [200, 260], nose: [60, 90], cheek: [250, 400], mant: [180, 230], side: [60, 70], era: false, auto: 'none', loader: true, bustle: 'none', turBack: -1.2, turFront: 1.4, color: 0x59593b, eps: [-4, 17], sc: 0.94, bar: 3.9, ca: 20, vmax: 13.5, vrev: 5, acc: 3.8, hammo: 'carousel', g: { ap: [1415, 300], heat: [900, 380] } },
+  m1:   { name: 'M1A2 Abrams', nat: 'ABD', crewN: 4, mass: 67.0, reload: 4.4, hw: 1.17, glacis: [520, 900], nose: [100, 160], cheek: [800, 1250], mant: [300, 420], side: [80, 120], era: false, auto: 'none', loader: true, bustle: 'isolated', turBack: -2.4, turFront: 1.7, color: 0x9a8658, eps: [-10, 20], sc: 1.07, bar: 4.5, ca: 32, vmax: 14.5, vrev: 5.5, acc: 4.2, hammo: 'isolated', g: { ap: [1555, 560], heat: [1140, 640] } },
+  leo:  { name: 'Leopard 2A7', nat: 'Almanya', crewN: 4, mass: 64.0, reload: 4.0, hw: 1.18, glacis: [520, 820], nose: [100, 160], cheek: [850, 1300], mant: [310, 430], side: [90, 120], era: false, auto: 'none', loader: true, bustle: 'isolated', turBack: -2.3, turFront: 1.8, color: 0x56603f, eps: [-9, 20], sc: 1.06, bar: 4.9, ca: 30, vmax: 14.5, vrev: 5.5, acc: 4.2, hammo: 'bustle', g: { ap: [1750, 610], heat: [1140, 640] } },
+  ch2:  { name: 'Challenger 2', nat: 'Birleşik Krallık', crewN: 4, mass: 75.0, reload: 5.8, hw: 1.22, glacis: [600, 1000], nose: [110, 170], cheek: [900, 1450], mant: [330, 500], side: [95, 130], era: false, auto: 'none', loader: true, bustle: 'isolated', turBack: -2.2, turFront: 1.75, color: 0x7b7249, eps: [-7, 20], sc: 1.1, bar: 3.9, ca: 24, vmax: 11.5, vrev: 4.5, acc: 3.0, hammo: 'isolated', g: { ap: [1500, 500], heat: [1000, 620] } },
+  lec:  { name: 'Leclerc', nat: 'Fransa', crewN: 3, mass: 57.0, reload: 4.8, hw: 1.15, glacis: [480, 780], nose: [100, 150], cheek: [760, 1150], mant: [260, 360], side: [80, 100], era: false, auto: 'none', loader: false, bustle: 'isolated', turBack: -2.0, turFront: 1.6, color: 0x9c8a62, eps: [-8, 20], sc: 1.02, bar: 4.6, ca: 26, vmax: 14.5, vrev: 5.5, acc: 4.4, hammo: 'isolated', g: { ap: [1750, 590], heat: [1140, 640] } }
+};
+const TANK_KEYS = ['t90', 't72', 't55', 'm1', 'leo', 'ch2', 'lec'];
+const gunStat = (P, type) => { const g = P.g && P.g[type]; return { v0: g ? g[0] : SHELL[type].v0, pen0: g ? g[1] : SHELL[type].pen0 }; };
+const RING = { y: 1.5, z: 0.55 }, PIVOT = [0, 0.62, 1.3], BARREL = 4.2;
+
+function B(parent, name, c, s, o) {
+  o = o || {};
+  const ax = o.ax !== undefined ? o.ax : (s[0] <= s[1] && s[0] <= s[2] ? 0 : s[1] <= s[2] ? 1 : 2);
+  const t = s[ax];
+  const ke = o.ke || 0, ce = o.ce !== undefined ? o.ce : ke;
+  return {
+    parent, name, c, s, h: [s[0] / 2, s[1] / 2, s[2] / 2], rx: (o.rx || 0) * DEG, ry: (o.ry || 0) * DEG,
+    Rl: mmul(rotY((o.ry || 0) * DEG), rotX((o.rx || 0) * DEG)),
+    eqKE: ke / (t * 1000), eqCE: ce / (t * 1000), keN: ke, ceN: ce,
+    ax, kind: o.kind || 'armor', shell: o.shell !== false, era: !!o.era, dead: false, round: !!o.round
+  };
+}
+function M(parent, id, name, kind, c, s, absorb, o) {
+  o = o || {};
+  return Object.assign({ parent, id, name, kind, c, s, h: [s[0] / 2, s[1] / 2, s[2] / 2], Rl: rotY(0), absorb, hp: 100, state: 'ok' }, o);
+}
+function buildSpec(key) {
+  const P = SPECS[key], hw = P.hw, vols = [], mods = [];
+  const a = Math.atan2(0.55, 1.2), ad = a / DEG, ca = Math.cos(a), sa = Math.sin(a);
+  const w = hw * 2;
+  /* gövde */
+  vols.push(B('hull', 'Taban', [0, 0.42, 0], [w, 0.02, 6.4], { ke: 20 }));
+  vols.push(B('hull', 'Alt ön plaka', [0, 0.70, 3.125], [w, 0.05, 0.53], { rx: -48.8, ke: P.nose[0], ce: P.nose[1] }));
+  vols.push(B('hull', 'Üst ön plaka (glacis)', [0, 1.175, 2.70], [w, 0.20, 1.32], { rx: ad, ke: P.glacis[0], ce: P.glacis[1] }));
+  vols.push(B('hull', 'Gövde tavanı (ön)', [0, 1.50, 1.875], [w, 0.03, 0.45], { ke: 25 }));
+  vols.push(B('hull', 'Motor güvertesi', [0, 1.50, -1.9], [w, 0.03, 2.7], { ke: 25 }));
+  vols.push(B('hull', 'Arka plaka', [0, 0.96, -3.25], [w, 1.08, 0.03], { ke: 45, ax: 2 }));
+  for (const sx of [-1, 1]) {
+    vols.push(B('hull', 'Gövde yanı', [sx * hw, 0.96, 0], [0.05, 1.08, 6.5], { ke: P.side[0], ce: P.side[1], ax: 0 }));
+    vols.push(B('hull', 'Palet', [sx * (hw + 0.35), 0.45, 0.1], [0.6, 0.9, 6.9], { ke: 20, kind: 'track', shell: false, ax: 0 }));
+  }
+  if (P.era) {
+    const t = [0, -sa, ca], n = [0, ca, sa];
+    for (const u of [-0.8, -0.27, 0.27, 0.8]) for (const s of [-0.28, 0.28]) {
+      const c = [u, 1.175 + t[1] * s + n[1] * 0.16, 2.70 + t[2] * s + n[2] * 0.16];
+      vols.push(B('hull', 'ERA', c, [0.46, 0.09, 0.5], { rx: ad, ke: 30, ce: 30, era: true, kind: 'era', shell: false, ax: 1 }));
+    }
+  }
+  /* kule */
+  const tb = P.turBack, tf = P.turFront, tl = tf - tb, tc = (tf + tb) / 2;
+  vols.push(B('turret', 'Silah mantleti', [0, 0.62, 1.55], [1.0, 0.55, 0.35], { ke: P.mant[0], ce: P.mant[1], ax: 2 }));
+  vols.push(B('turret', 'Kule alt ön (silah altı)', [0, 0.17, 1.4], [0.95, 0.34, 0.45], { ke: 150, ce: 200, ax: 2 }));
+  for (const sx of [-1, 1]) {
+    vols.push(B('turret', 'Kule yanak (kompozit)', [sx * 0.82, 0.62, 1.17], [0.75, 0.9, 0.95], { ry: sx * P.ca, ke: P.cheek[0], ce: P.cheek[1], ax: 2 }));
+    vols.push(B('turret', 'Kule yanı', [sx * 1.0, 0.5, (0.55 + tb + 0.05) / 2], [0.08, 0.9, 0.55 - tb - 0.05], { ke: P.side[0] + 10, ce: P.side[1] + 10, ax: 0 }));
+    if (P.era) for (const off of [-0.2, 0.2]) {
+      const q = sx * P.ca * DEG, nx = Math.sin(q), nz = Math.cos(q), tx = Math.cos(q), tz = -Math.sin(q);
+      vols.push(B('turret', 'ERA', [sx * 0.82 + nx * 0.54 + tx * off, 0.64, 1.17 + nz * 0.54 + tz * off], [0.3, 0.5, 0.12], { ry: sx * P.ca, ke: 30, ce: 30, era: true, kind: 'era', shell: false, ax: 2 }));
+    }
+  }
+  vols.push(B('turret', 'Kule tavanı', [0, 0.97, (tf + tb) / 2 + 0.1], [w * 0.9, 0.04, tl - 0.2], { ke: 40, ax: 1 }));
+  vols.push(B('turret', 'Kule arka plaka', [0, 0.5, tb], [w * 0.9, 0.9, 0.06], { ke: 60, ax: 2 }));
+  /* top */
+  vols.push(B('gun', 'Namlu', [0, 0, (0.45 + P.bar) / 2], [0.14, 0.14, P.bar - 0.45], { ke: 140, kind: 'barrel', shell: false, ax: 0, round: true }));
+  /* modüller */
+  mods.push(M('hull', 'drv', 'Sürücü', 'crew', [0, 0.95, 2.35], [0.7, 0.7, 0.8], 12));
+  if (P.auto === 'carousel') mods.push(M('hull', 'car', 'Mermi karuseli', 'ammo', [0, 0.68, 0.55], [2.0, 0.4, 2.0], 10, { ammoKind: 'carousel' }));
+  else { mods.push(M('hull', 'hammo', 'Gövde mühimmatı', 'ammo', [0.7, 0.85, 1.9], [0.5, 0.5, 0.6], 8, { ammoKind: P.hammo })); }
+  mods.push(M('hull', 'eng', 'Motor', 'engine', [0, 0.95, -2.1], [hw * 1.5, 0.8, 1.9], 150));
+  mods.push(M('hull', 'fue1', 'Yakıt', 'fuel', [-0.85, 0.85, 1.85], [0.5, 0.6, 0.55], 6));
+  mods.push(M('hull', 'fue2', 'Yakıt', 'fuel', [0, 0.85, -3.0], [hw * 1.5, 0.6, 0.35], 6));
+  mods.push(M('turret', 'cmd', 'Komutan', 'crew', [0.55, 0.45, -0.3], [0.55, 0.85, 0.6], 12));
+  mods.push(M('turret', 'gnr', 'Nişancı', 'crew', [-0.55, 0.45, 0.3], [0.55, 0.8, 0.6], 12, { role: 'gunner' }));
+  if (P.loader) mods.push(M('turret', 'ldr', 'Yükleyici', 'crew', [0.55, 0.45, 0.45], [0.55, 0.8, 0.6], 12, { role: 'loader' }));
+  mods.push(M('turret', 'brc', 'Silah kaması', 'gun', [0, 0.62, 0.75], [0.5, 0.45, 0.8], 110));
+  mods.push(M('turret', 'opt', 'Nişangâh', 'optics', [-0.5, 0.95, 0.95], [0.3, 0.15, 0.3], 4));
+  if (P.bustle === 'isolated') mods.push(M('turret', 'bus', 'Yalıtımlı mühimmat bölmesi', 'ammo', [0, 0.55, tb + 0.55], [1.6, 0.8, 0.8], 8, { ammoKind: 'isolated' }));
+  else if (P.bustle !== 'none') mods.push(M('turret', 'bus', 'Kule arka mühimmat', 'ammo', [0, 0.5, tb + 0.3], [1.2, 0.55, 0.4], 8, { ammoKind: 'bustle' }));
+  const sc = P.sc || 1;
+  if (sc !== 1) for (const o of vols.concat(mods)) {
+    o.c = o.c.map(v => v * sc); o.s = o.s.map(v => v * sc); o.h = o.s.map(v => v / 2);
+    if (o.ax !== undefined) { const th = o.s[o.ax]; o.eqKE = o.keN / (th * 1000); o.eqCE = o.ceN / (th * 1000); }
+  }
+  return { P, vols, mods };
+}
+
+/* ======================= Arazi ======================= */
+function makeTerrain(seed) {
+  let s = seed >>> 0;
+  const R = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const p = []; for (let i = 0; i < 9; i++) p.push(R() * 6.283);
+  const k = 0.8 + R() * 0.5;
+  const h = (x, z) => k * (9 * Math.sin(x / 300 + p[0]) * Math.cos(z / 340 + p[1]) + 6 * Math.sin((x + z) / 190 + p[2]) * Math.cos((x - z) / 230 + p[3]) + 2.6 * Math.sin(x / 95 + p[4]) * Math.sin(z / 80 + p[5]) + 0.7 * Math.sin(x / 23 + p[6]) * Math.sin(z / 29 + p[7]));
+  const normal = (x, z) => { const e = 1.5; return vnorm([h(x - e, z) - h(x + e, z), 2 * e, h(x, z - e) - h(x, z + e)]); };
+  return { h, normal, R };
+}
+
+/* ======================= Tank nesnesi ======================= */
+let TANK_ID = 0;
+function makeTank(key, x, z, yaw, terrain) {
+  const S = buildSpec(key), P = S.P;
+  const t = {
+    id: ++TANK_ID, key, P, name: P.name, vols: S.vols, mods: S.mods,
+    pos: [x, 0, z], yaw, R: rotY(yaw), turYaw: 0, elev: 0, epsMin: P.eps[0] * DEG, epsMax: P.eps[1] * DEG,
+    speed: 0, throttle: 0, steer: 0, reloadT: 0, reloadTime: P.reload, sel: 'ap', ammo: { ap: 22, heat: 12, he: 10 },
+    gunOK: true, optOK: true, trackOK: true, fire: false, fireT: 0, extTried: false, dead: false, cause: '', turretGone: false, debris: null,
+    ring: { y: RING.y * (P.sc || 1), z: RING.z * (P.sc || 1) }, pivot: PIVOT.map(v => v * (P.sc || 1)), bar: P.bar * (P.sc || 1), repair: null, repairCd: 45, crewN: P.crewN, recoil: 0, rt: 99, kp: 0, kpv: 0, kr: 0, krv: 0, kb: 0, hitFlash: 0
+  };
+  for (const v of t.vols) { v.dead = false; }
+  for (const m of t.mods) { m.hp = 100; m.state = 'ok'; m.hurt = false; }
+  updatePose(t, terrain, true);
+  return t;
+}
+function updatePose(t, terrain, snap) {
+  const f = [Math.sin(t.yaw), 0, Math.cos(t.yaw)], r = [f[2], 0, -f[0]];
+  const hs = [[0, 0], [2.6, 0], [-2.6, 0], [0, 1.4], [0, -1.4]].map(o => terrain.h(t.pos[0] + f[0] * o[0] + r[0] * o[1], t.pos[2] + f[2] * o[0] + r[2] * o[1]));
+  const hF = hs[1], hB = hs[2], hR = hs[3], hL = hs[4];
+  /* eğim: ileri ve sağ yönde */
+  const sf = (hF - hB) / 5.2, sr = (hR - hL) / 2.8;
+  let n = vnorm([-(sf * f[0] + sr * r[0]), 1, -(sf * f[2] + sr * r[2])]);
+  const tgt = (hs[0] * 2 + hF + hB + hR + hL) / 6;
+  t.pos[1] = snap ? tgt : t.pos[1] + (tgt - t.pos[1]) * 0.35;
+  if (!t.up || snap) t.up = n; else t.up = vnorm(vadd(vmul(t.up, 0.8), vmul(n, 0.2)));
+  const fw = vnorm(vsub(f, vmul(t.up, vdot(f, t.up)))), rt = vnorm(vcross(t.up, fw));
+  t.R = basis(rt, t.up, vcross(rt, t.up));
+}
+function refresh(t) {
+  const Rh = t.R, ph = t.pos;
+  const pr = vadd(ph, mv(Rh, [0, t.ring.y, t.ring.z])), Rt = mmul(Rh, rotY(t.turYaw));
+  const pp = vadd(pr, mv(Rt, t.pivot)), Rg = mmul(Rt, rotX(-t.elev));
+  t.F = { hull: [Rh, ph], turret: [Rt, pr], gun: [Rg, pp] };
+  for (const o of t.vols.concat(t.mods)) {
+    const F = t.F[o.parent];
+    o.Rw = mmul(F[0], o.Rl); o.pw = vadd(F[1], mv(F[0], o.c));
+  }
+  t.pivotW = pp; t.gunDir = mv(Rg, [0, 0, 1]); t.muzzle = vadd(pp, vmul(t.gunDir, t.bar));
+}
+const partActive = (t, o) => !(t.turretGone && (o.parent === 'turret' || o.parent === 'gun'));
+
+/* ======================= Işın-kutu ======================= */
+function rayBox(o, d, b) {
+  const lo = mtv(b.Rw, vsub(o, b.pw)), ld = mtv(b.Rw, d);
+  let t0 = -1e9, t1 = 1e9, ax = -1, sg = 1;
+  for (let i = 0; i < 3; i++) {
+    if (Math.abs(ld[i]) < 1e-9) { if (Math.abs(lo[i]) > b.h[i]) return null; continue; }
+    let a = (-b.h[i] - lo[i]) / ld[i], c = (b.h[i] - lo[i]) / ld[i], s = ld[i] > 0 ? -1 : 1;
+    if (a > c) { const k = a; a = c; c = k; }
+    if (a > t0) { t0 = a; ax = i; sg = s; }
+    if (c < t1) t1 = c;
+    if (t0 > t1) return null;
+  }
+  if (t1 < 0) return null;
+  const nl = [0, 0, 0]; if (ax >= 0) nl[ax] = sg;
+  return { tin: t0, tout: t1, n: ax >= 0 ? mv(b.Rw, nl) : vmul(d, -1) };
+}
+
+/* ======================= Hasar ======================= */
+function startFire(t, p, rep, src) {
+  if (t.fire) return;
+  if (Math.random() < p) { t.fire = true; t.fireT = 0; t.extTried = false; rep && rep.dmg.push(src + ' yangın başlattı'); }
+}
+function catastrophic(t, rep, src, world) {
+  if (t.turretGone) return;
+  t.dead = true; t.cause = src + ' infilak etti'; t.turretGone = true; t.fire = true;
+  for (const m of t.mods) if (m.kind === 'crew') m.hp = 0;
+  t.debris = { pending: true, vel: [rnd(-3, 3), rnd(13, 20), rnd(-3, 3)], spin: [rnd(-2, 2), rnd(-3, 3), rnd(-2, 2)] };
+  rep && rep.dmg.push(src + ' infilak etti, kule fırladı');
+  world && world.fx && world.fx('boom', vadd(t.pos, [0, 2, 0]), 3);
+}
+function ammoIgnite(t, m, rep, world) {
+  if (m.hp <= 0) return;
+  m.hp = 0; m.state = 'dead';
+  if (m.ammoKind === 'carousel') { if (Math.random() < 0.8) catastrophic(t, rep, m.name, world); else startFire(t, 1, rep, m.name); }
+  else if (m.ammoKind === 'bustle') { if (Math.random() < 0.5) catastrophic(t, rep, m.name, world); else startFire(t, 1, rep, m.name); }
+  else {
+    rep && rep.dmg.push(m.name + ' tutuştu, patlama panelleri havalandırdı');
+    t.gunOK = false;
+    for (const c of t.mods) if (c.kind === 'crew' && c.parent === 'turret' && Math.random() < 0.3) c.hp = 0;
+    startFire(t, 0.9, rep, m.name);
+    world && world.fx && world.fx('boom', vadd(t.pos, [0, 2.4, 0]), 1.6);
+  }
+}
+function hitModule(t, m, s, rep, world) {
+  switch (m.kind) {
+    case 'crew': if (m.hp > 0) { m.hp = 0; rep.dmg.push(m.name + ' öldü'); } break;
+    case 'ammo': if (Math.random() < 0.55 + (s.type === 'heat' ? 0.15 : 0)) ammoIgnite(t, m, rep, world); else rep.dmg.push(m.name + ' isabet aldı, tutuşmadı'); break;
+    case 'fuel': m.hp = Math.max(0, m.hp - 60); rep.dmg.push('Yakıt deposu delindi'); startFire(t, 0.6, rep, 'Yakıt'); break;
+    case 'engine': m.hp = Math.max(0, m.hp - clamp(s.pen * 0.4, 30, 100)); rep.dmg.push('Motor hasar aldı (%' + Math.round(m.hp) + ')'); startFire(t, 0.3, rep, 'Motor'); break;
+    case 'gun': if (t.gunOK) { t.gunOK = false; rep.dmg.push('Silah kaması imha oldu'); } m.hp = 0; break;
+    case 'optics': if (t.optOK) { t.optOK = false; rep.dmg.push('Nişangâh bozuldu'); } m.hp = 0; break;
+  }
+}
+function fragModule(t, m, e, rep, world) {
+  switch (m.kind) {
+    case 'crew': if (m.hp > 0) { m.hp -= e; if (m.hp <= 0) rep.dmg.push(m.name + ' kıymıklardan öldü'); else if (!m.hurt) { m.hurt = true; rep.dmg.push(m.name + ' yaralandı'); } } break;
+    case 'ammo': if (Math.random() < 0.035 + e * 0.0012) ammoIgnite(t, m, rep, world); break;
+    case 'fuel': if (Math.random() < 0.10) startFire(t, 1, rep, 'Yakıt'); break;
+    case 'engine': m.hp = Math.max(0, m.hp - 3); break;
+    case 'gun': m.hp -= e * 0.4; if (m.hp <= 0 && t.gunOK) { t.gunOK = false; rep.dmg.push('Silah kaması hasarlı'); } break;
+    case 'optics': m.hp -= e; if (m.hp <= 0 && t.optOK) { t.optOK = false; rep.dmg.push('Nişangâh bozuldu'); } break;
+  }
+}
+function spawnFrags(t, H, dir, n, cone, e, rep, world) {
+  const up = Math.abs(dir[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], u = vnorm(vcross(dir, up)), v = vcross(dir, u);
+  for (let i = 0; i < n; i++) {
+    const ang = rnd(0, 6.283), r = Math.sqrt(Math.random()) * Math.tan(cone / 2);
+    const d = vnorm(vadd(dir, vadd(vmul(u, Math.cos(ang) * r), vmul(v, Math.sin(ang) * r))));
+    const L = rnd(0.8, 2.6), A = vadd(H, vmul(d, 0.03));
+    let best = null;
+    for (const m of t.mods) {
+      if (!partActive(t, m)) continue;
+      const q = rayBox(A, d, m);
+      if (q && q.tout > 0 && q.tin < L && (!best || q.tin < best.t)) best = { m, t: Math.max(0, q.tin) };
+    }
+    if (best) fragModule(t, best.m, e * rnd(0.6, 1.3), rep, world);
+    if (rep && rep.frags) rep.frags.push({ a: A, b: vadd(A, vmul(d, best ? best.t : Math.min(L, 1.2))), hit: !!best });
+  }
+}
+function heBlastExternal(t, Hw, R, rep) {
+  for (const m of t.mods) {
+    if (m.kind !== 'optics' && !(m.kind === 'crew' && false)) continue;
+    const d = Math.max(0, vlen(vsub(m.pw, Hw)) - 0.5);
+    if (d < R && Math.random() < 0.65 * (1 - d / R) && t.optOK) { t.optOK = false; m.hp = 0; rep && rep.dmg.push('Nişangâh bozuldu (HE şoku)'); }
+  }
+  /* palet: yere/pale yakın patlama */
+  for (const v of t.vols) if (v.kind === 'track') {
+    const d = Math.max(0, vlen(vsub(v.pw, Hw)) - 1.4);
+    if (d < R && Math.random() < 0.5 * (1 - d / R) && t.trackOK) { t.trackOK = false; rep && rep.dmg.push('Palet koptu (HE şoku)'); }
+  }
+}
+function evaluateTank(t) {
+  if (t.dead) return;
+  const crew = t.mods.filter(m => m.kind === 'crew');
+  if (crew.filter(m => m.hp > 0).length <= 1) { t.dead = true; t.cause = 'Mürettebat etkisiz'; }
+  for (const m of t.mods) m.state = m.hp <= 0 ? 'dead' : (m.hp < 70 || m.hurt ? 'hurt' : 'ok');
+}
+const effOf = m => !m || m.hp <= 0 ? 0 : clamp(m.hp / 100, 0.5, 1);
+function gunnerEff(t) { const g = t.mods.find(m => m.role === 'gunner'), c = t.mods.find(m => m.id === 'cmd'), e = effOf(g); return e > 0 ? e : effOf(c) * 0.5; }
+function driverEff(t) { const d = t.mods.find(m => m.id === 'drv'), e = effOf(d); if (e > 0) return e; let b = 0; for (const m of t.mods) if (m.kind === 'crew' && m.id !== 'drv') b = Math.max(b, effOf(m)); return 0.4 * b; }
+const canFire = t => !t.dead && t.gunOK && !t.repair && gunnerEff(t) > 0;
+const canMove = t => { const e = t.mods.find(m => m.kind === 'engine'); return !t.dead && t.trackOK && !t.repair && driverEff(t) > 0 && e.hp > 0; };
+const engineFactor = t => clamp(t.mods.find(m => m.kind === 'engine').hp / 100, 0.35, 1);
+function reloadFactor(t) {
+  let f = 1; const l = t.mods.find(m => m.role === 'loader');
+  if (l) f *= l.hp <= 0 ? 2.2 : 1 / (0.55 + 0.45 * effOf(l));
+  const c = t.mods.find(m => m.ammoKind === 'carousel' && m.parent === 'hull' && m.id === 'car'); if (c && c.hp <= 0) f *= 1.8;
+  if (!l) f *= 1 + (1 - gunnerEff(t)) * 0.7;
+  return f;
+}
+/* ---- tamir: 90 sn'de bir, 8 sn sürer ---- */
+const REPAIR_CD = 90, REPAIR_T = 8;
+const canRepair = t => !t.dead && !t.repair && t.repairCd <= 0 && !t.turretGone;
+const needsRepair = t => !t.trackOK || !t.gunOK || !t.optOK || t.fire || t.mods.some(m => (m.kind === 'engine' && m.hp < 70) || (m.kind === 'crew' && m.hp > 0 && m.hp < 80));
+function startRepair(t, world) { if (!canRepair(t)) return false; t.repair = { t: 0, dur: REPAIR_T }; t.speed = 0; world && world.log && world.log(t.name + ': tamir başladı'); return true; }
+function finishRepair(t, world) {
+  const fixed = [];
+  if (!t.trackOK) { t.trackOK = true; fixed.push('palet'); }
+  if (!t.gunOK) { t.gunOK = true; fixed.push('top'); const g = t.mods.find(m => m.kind === 'gun'); if (g) g.hp = 100; }
+  if (!t.optOK) { t.optOK = true; fixed.push('nişangâh'); const o = t.mods.find(m => m.kind === 'optics'); if (o) o.hp = 100; }
+  const e = t.mods.find(m => m.kind === 'engine'); if (e && e.hp < 75) { e.hp = 75; fixed.push('motor'); }
+  let healed = 0; for (const m of t.mods) if (m.kind === 'crew' && m.hp > 0 && (m.hp < 90 || m.hurt)) { m.hp = Math.min(100, m.hp + 55); m.hurt = false; healed++; }
+  if (healed) fixed.push('yaralılar');
+  if (t.fire) { t.fire = false; fixed.push('yangın'); }
+  t.repair = null; t.repairCd = REPAIR_CD; evalMods(t);
+  world && world.log && world.log(t.name + ': tamir bitti' + (fixed.length ? ' (' + fixed.join(', ') + ')' : ''));
+}
+function evalMods(t) { for (const m of t.mods) m.state = m.hp <= 0 ? 'dead' : (m.hp < 70 || m.hurt ? 'hurt' : 'ok'); }
+function tickTank(t, dt, world) {
+  if (t.reloadT > 0) t.reloadT = Math.max(0, t.reloadT - dt);
+  t.rt += dt; { const a = t.rt; t.recoil = a < 0.06 ? Math.sin(a / 0.06 * Math.PI / 2) : Math.pow(Math.max(0, 1 - (a - 0.06) / 1.1), 2); }
+  { const k = 150, c = 8.5; t.kpv += (-k * t.kp - c * t.kpv) * dt; t.kp += t.kpv * dt; t.krv += (-k * t.kr - c * t.krv) * dt; t.kr += t.krv * dt; t.kb *= Math.max(0, 1 - 5 * dt); }
+  if (t.hitFlash > 0) t.hitFlash -= dt;
+  if (t.repairCd > 0) t.repairCd -= dt;
+  if (t.repair) { if (t.dead) t.repair = null; else { t.repair.t += dt; t.speed = 0; if (t.repair.t >= t.repair.dur) finishRepair(t, world); } }
+  if (t.fire) {
+    t.fireT += dt;
+    if (!t.dead) {
+      for (const m of t.mods) if (m.kind === 'crew' && m.hp > 0) { m.hp -= 7 * dt; if (m.hp <= 0) world.log && world.log(t.name + ': ' + m.name + ' yangında öldü'); }
+      if (!t.extTried && t.fireT > 2.5) { t.extTried = true; if (Math.random() < 0.55) { t.fire = false; world.log && world.log(t.name + ': yangın söndürme sistemi çalıştı'); } }
+      if (t.fireT > 10) { t.dead = true; t.cause = 'Yangın'; }
+      evaluateTank(t);
+    }
+  }
+  evalMods(t);
+}
+
+/* ======================= Mermi izleme ======================= */
+function traceShell(world, t, s, o, d, segL) {
+  const sp = SHELL[s.type];
+  refresh(t);
+  const evs = [];
+  let first = Infinity;
+  for (const v of t.vols) {
+    if (v.dead || !partActive(t, v)) continue;
+    const r = rayBox(o, d, v); if (!r || r.tout <= 0) continue;
+    const tin = Math.max(r.tin, 0);
+    evs.push({ k: 'a', o: v, tin, tout: r.tout, n: r.n });
+    if (tin <= segL && tin < first) first = tin;
+  }
+  if (first === Infinity) return false;
+  for (const m of t.mods) {
+    if (!partActive(t, m)) continue;
+    const r = rayBox(o, d, m); if (!r || r.tout <= 0) continue;
+    evs.push({ k: 'm', o: m, tin: Math.max(r.tin, 0), tout: r.tout });
+  }
+  const list = evs.filter(e => e.tin >= first - 1e-4 || e.k === 'a' && e.tout > first).sort((a, b) => a.tin - b.tin);
+  const rep = s.rep && s.rep.tank === t ? s.rep : (s.rep = { tank: t, shell: s.type, lines: [], dmg: [], path: [], frags: [], outcome: '', id: ++world.repId, owner: s.owner });
+  const ang0 = Math.acos(clamp(-vdot(d, list.find(e => e.k === 'a').n), 0, 1));
+  rep.hitFrom = ang0;
+  if (s.pen === undefined) {
+    const ratio = vlen(s.v) / (s.v0b || sp.v0), pb = s.pb || sp.pen0;
+    s.pen = s.type === 'ap' ? pb * Math.pow(ratio, 1.5) : pb; s.pen0 = s.pen;
+  }
+  const at = tt => vadd(o, vmul(d, tt));
+  let penetrated = false, lastT = first, startPt = at(first), result = null;
+  rep.path.push(startPt.slice());
+  const seen = new Set();
+  for (const e of list) {
+    if (!s.alive) break;
+    if (e.k === 'a') {
+      const v = e.o; if (v.dead) continue;
+      const entryPt = at(e.tin), exitPt = at(e.tout), chord = e.tout - e.tin, cosT = clamp(-vdot(d, e.n), 0, 1), thDeg = Math.round(Math.acos(cosT) / DEG);
+      if (v.kind === 'barrel') {
+        s.pen *= 0.85; if (t.gunOK) { t.gunOK = false; rep.dmg.push('Namlu hasar aldı, ateş edilemez'); }
+        rep.lines.push('Namlu: isabet, penetrasyon %15 azaldı'); rep.outcome = rep.outcome || 'Namlu vuruldu'; continue;
+      }
+      if (s.type === 'he') {
+        const los = (v.keN > 0 ? v.eqKE * chord * 1000 : 0), Hw = entryPt;
+        if ((s.pb || sp.pen0) > los && v.shell) {
+          rep.lines.push(v.name + ': açı ' + thDeg + '°, LOS ' + Math.round(los) + ' mm, HE ' + (s.pb || sp.pen0) + ' mm: İÇERİDE PATLADI');
+          spawnFrags(t, at(e.tout), d, 16, 3.4, 30, rep, world);
+          for (const m of t.mods) if (partActive(t, m) && vlen(vsub(m.pw, exitPt)) < 1.6) {
+            if (m.kind === 'crew' && m.hp > 0) { m.hp -= rnd(40, 90); if (m.hp <= 0) rep.dmg.push(m.name + ' öldü (iç patlama)'); }
+            else if (m.kind === 'ammo' && Math.random() < 0.2) ammoIgnite(t, m, rep, world);
+            else if (m.kind === 'fuel') startFire(t, 0.5, rep, 'Yakıt');
+          }
+          rep.outcome = 'HE içeride patladı';
+        } else { rep.lines.push(v.name + ': LOS ' + Math.round(los) + ' mm > HE ' + (s.pb || sp.pen0) + ' mm: dışarıda patladı'); rep.outcome = 'HE dışarıda patladı'; }
+        heBlastExternal(t, Hw, 4, rep);
+        world.fx && world.fx('burst', Hw, 1.2);
+        rep.path.push(Hw.slice()); s.alive = false; result = 'stop'; break;
+      }
+      /* sekme */
+      if (!penetrated && !v.round && v.kind !== 'era') {
+        const rico = s.type === 'ap' ? sp.ricoDeg + rnd(-3, 4) : sp.ricoDeg;
+        if (thDeg > rico) {
+          rep.lines.push(v.name + ': açı ' + thDeg + '°: SEKTİ'); rep.outcome = 'Sekti';
+          const nd = vnorm(vsub(d, vmul(e.n, 2 * vdot(d, e.n))));
+          const spd = vlen(s.v) * 0.5;
+          s.v = vmul(nd, spd); s.p = vadd(entryPt, vmul(nd, 0.08)); s.pen = undefined; s.ricoed = true; s.passed.add(t);
+          rep.path.push(entryPt.slice());
+          world.fx && world.fx('spark', entryPt, 1.4);
+          return 'ricochet';
+        }
+      }
+      if (v.kind === 'era') {
+        if (penetrated) continue;
+        const f = s.type === 'heat' ? 0.35 : 0.8; s.pen *= f; v.dead = true; v.mesh && (v.mesh.visible = false);
+        rep.lines.push('ERA bloğu patladı: penetrasyon %' + Math.round((1 - f) * 100) + ' azaldı');
+        rep.path.push(entryPt.slice()); world.fx && world.fx('burst', entryPt, 0.9);
+        continue;
+      }
+      const eq = s.type === 'heat' ? v.eqCE : v.eqKE;
+      let los = chord * eq * 1000;
+      if (s.type === 'ap') los = Math.max(los * 0.93, 0);
+      if (s.pen > los) {
+        s.pen -= los; rep.lines.push(v.name + ': açı ' + thDeg + '°, LOS ' + Math.round(los) + ' mm < pen ' + Math.round(s.pen + los) + ' mm: DELDİ');
+        rep.path.push(entryPt.slice()); rep.path.push(exitPt.slice());
+        world.fx && world.fx('spark', entryPt, 1.6);
+        rep.outcome = 'Zırhı deldi'; lastT = e.tout;
+        if (v.shell) { penetrated = true; spawnFrags(t, exitPt, d, Math.min(36, Math.round((8 + s.pen / 28) * (s.type === 'heat' ? 1.5 : 1))), s.type === 'heat' ? 0.9 : 0.6, 18 + s.pen * 0.06, rep, world); }
+        else if (v.kind === 'track') { if (t.trackOK) { t.trackOK = false; rep.dmg.push('Palet koptu'); } }
+      } else {
+        rep.lines.push(v.name + ': açı ' + thDeg + '°, LOS ' + Math.round(los) + ' mm > pen ' + Math.round(s.pen) + ' mm: DELEMEDİ');
+        if (!penetrated) rep.outcome = 'Delemedi'; else rep.outcome = 'İçeride kaldı';
+        if (v.shell && s.pen > 0.55 * los) spawnFrags(t, entryPt, d, 3 + Math.floor(rnd(0, 3)), 0.8, 8, rep, world);
+        rep.path.push(entryPt.slice()); world.fx && world.fx('spark', entryPt, 1);
+        s.alive = false; result = 'stop'; break;
+      }
+    } else if (penetrated) {
+      const m = e.o; if (seen.has(m.id + m.parent)) continue; seen.add(m.id + m.parent);
+      const pt = at(e.tin);
+      hitModule(t, m, s, rep, world); rep.path.push(pt.slice());
+      s.pen -= m.absorb; if (!rep.mods) rep.mods = []; rep.mods.push(m.name);
+      if (s.pen <= 0) { s.alive = false; rep.outcome = 'İçeride durdu'; rep.lines.push(m.name + ' içinde durdu'); result = 'stop'; break; }
+    }
+  }
+  if (s.alive) { s.p = vadd(at(lastT), vmul(d, 0.05)); s.passed.add(t); if (penetrated && rep.outcome === 'Zırhı deldi' && rep.mods && rep.mods.length) rep.outcome = 'Delip içeriyi vurdu'; }
+  else if (!result) result = 'stop';
+  return 'hit';
+}
+
+/* ======================= Dünya adımı ======================= */
+function stepShell(world, s, dt) {
+  const sp = SHELL[s.type], v = vlen(s.v);
+  s.v = [s.v[0] - s.v[0] * sp.c * v * dt, s.v[1] - (s.v[1] * sp.c * v + G) * dt, s.v[2] - s.v[2] * sp.c * v * dt];
+  const p0 = s.p, p1 = vadd(p0, vmul(s.v, dt)); s.age += dt;
+  const seg = vsub(p1, p0), segL = vlen(seg);
+  const ch = world.city ? world.city.segHit(p0, p1, s.cp) : null;
+  for (const t of world.tanks) {
+    if ((t === s.owner && s.age < 0.25) || s.passed.has(t)) continue;
+    const c = vadd(t.pos, [0, 1.5, 0]), dd = vsub(c, p0), l2 = vdot(seg, seg) || 1e-9, u = clamp(vdot(dd, seg) / l2, 0, 1);
+    if (vlen(vsub(c, vadd(p0, vmul(seg, u)))) > 6.8) continue;
+    if (ch && u > ch.f + 0.03) continue;
+    const dir = vnorm(seg);
+    const res = traceShell(world, t, s, p0, dir, segL);
+    if (res) {
+      if (s.rep && !s.rep.reported) { s.rep.reported = true; world.reports.push(s.rep); world.onReport && world.onReport(s.rep, t, s); }
+      evaluateTank(t); t.hitFlash = 0.3;
+      if (!s.alive) { world.onShellEnd && world.onShellEnd(s, t); return; }
+      if (res === 'ricochet') return;
+    }
+  }
+  if (ch) {
+    const r = world.city.impact(s, ch);
+    if (r.end) { if (r.blastR) for (const t of world.tanks) { refresh(t); heBlastExternal(t, r.pt, r.blastR, { dmg: [] }); } world.onShellEnd && world.onShellEnd(s, null); }
+    return;
+  }
+  /* arazi */
+  const n = Math.max(1, Math.ceil(segL / 2));
+  for (let i = 1; i <= n; i++) {
+    const q = vadd(p0, vmul(seg, i / n)), gh = world.terrain.h(q[0], q[2]);
+    if (q[1] < gh) {
+      s.p = [q[0], gh, q[2]]; s.alive = false;
+      world.fx && world.fx('dirt', s.p, s.type === 'he' ? 2.4 : 1.2);
+      if (s.type === 'he') for (const t of world.tanks) { refresh(t); heBlastExternal(t, s.p, 4, { dmg: [] }); }
+      world.onShellEnd && world.onShellEnd(s, null); return;
+    }
+  }
+  s.p = p1;
+  if (Math.abs(s.p[0]) > 4000 || Math.abs(s.p[2]) > 4000 || s.p[1] < -300) s.alive = false;
+}
+function fireGun(t, world, sigma) {
+  refresh(t);
+  const type = t.sel, sp = SHELL[type], gs = gunStat(t.P, type);
+  let d = t.gunDir;
+  const up = Math.abs(d[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0], u = vnorm(vcross(d, up)), w = vcross(d, u);
+  d = vnorm(vadd(d, vadd(vmul(u, gauss() * sigma), vmul(w, gauss() * sigma))));
+  const s = { type, p: t.muzzle.slice(), v: vmul(d, gs.v0), v0b: gs.v0, pb: gs.pen0, owner: t, alive: true, age: 0, passed: new Set() };
+  world.shells.push(s);
+  t.reloadT = t.reloadTime * reloadFactor(t); t.rt = 0; t.recoil = 0;
+  { const l = mtv(t.R, d); t.kpv += 0.6 * l[2]; t.krv += 0.4 * l[0]; t.kb = Math.min(0.35, t.kb + 0.3 * Math.abs(l[2])); }
+  world.fx && world.fx('muzzle', s.p, d);
+  return s;
+}
+/* düz atış eğimi: hedefe yatay menzil D ve yükseklik farkı dh için fırlatma açısı */
+function solveElev(D, dh, type, v0o) {
+  const sp = SHELL[type], V0 = v0o || sp.v0;
+  const sim = ang => {
+    let x = 0, y = 0, vx = Math.cos(ang) * V0, vy = Math.sin(ang) * V0; const dt = 0.01;
+    for (let i = 0; i < 1500; i++) {
+      const v = Math.hypot(vx, vy); vx -= vx * sp.c * v * dt; vy -= (vy * sp.c * v + G) * dt;
+      const nx = x + vx * dt, ny = y + vy * dt;
+      if (nx >= D) { const f = (D - x) / (nx - x); return y + (ny - y) * f; }
+      x = nx; y = ny; if (vx <= 0) break;
+    }
+    return -1e9;
+  };
+  const base = Math.atan2(dh, D); let lo = base - 0.02, hi = base + 0.4;
+  for (let i = 0; i < 22; i++) { const m = (lo + hi) / 2; if (sim(m) < dh) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}
+/* dünya yönünü kule yönü ve namlu yükselmesine çevir */
+function aimAnglesFor(t, dirW) {
+  const l = mtv(t.R, dirW);
+  const yaw = Math.atan2(l[0], l[2]), pitch = Math.asin(clamp(l[1], -1, 1));
+  return { yaw, pitch };
+}
+const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
+
+if (typeof module !== 'undefined') module.exports = { TANK_KEYS, gunStat, gunnerEff, driverEff, canRepair, needsRepair, startRepair, finishRepair, REPAIR_CD, REPAIR_T, SHELL, SPECS, makeTank, makeTerrain, updatePose, refresh, traceShell, stepShell, fireGun, solveElev, aimAnglesFor, evaluateTank, tickTank, canFire, canMove, engineFactor, reloadFactor, rotY, rotX, mv, mtv, rayBox, wrap, buildSpec, RING, PIVOT, BARREL, DEG, vsub, vadd, vmul, vnorm, vlen };
+/* ======================= Görsel tank modelleri (katmanlı zırh görünümü; isabet hacimleri fizik modelinde ayrıca tanımlıdır) =======================
+   Eksenler fizik motoruyla aynı: +Z ileri, +Y yukarı, +X sol/sağ. Gövde çerçevesinin orijini zeminde,
+   kule çerçevesinin orijini kule halkasında, top çerçevesinin orijini top muñusunda. */
+function camoTexture(base, c2, c3, seed) {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, 256, 256);
+  let s = seed; const R = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  for (const col of [c2, c3]) {
+    g.fillStyle = col;
+    for (let i = 0; i < 8; i++) {
+      const x = R() * 256, y = R() * 256, w = 26 + R() * 62, h = 12 + R() * 30, a = R() * 3.14;
+      for (const dx of [-256, 0, 256]) for (const dy of [-256, 0, 256]) { g.save(); g.translate(x + dx, y + dy); g.rotate(a); g.beginPath(); g.ellipse(0, 0, w, h, 0, 0, 6.283); g.fill(); g.restore(); }
+    }
+  }
+  for (let i = 0; i < 1800; i++) { g.fillStyle = 'rgba(0,0,0,' + (R() * 0.07).toFixed(3) + ')'; g.fillRect(R() * 256, R() * 256, 2, 2); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(0.45, 0.45); return tex;
+}
+const MODEL_STYLE = {
+  t90:  { base: '#4d5b3a', a: '#6a5a3a', b: '#34402c', plain: 0x4b5838 },
+  t72:  { base: '#5a5d3c', a: '#46482f', b: '#6e6240', plain: 0x575a3a },
+  t55:  { base: '#4e5338', a: '#3f432e', b: '#5f5a3a', plain: 0x4d5238 },
+  m1:   { base: '#a3906a', a: '#8a7650', b: '#b3a27c', plain: 0x9c8a62 },
+  leo:  { base: '#4a5535', a: '#2e2a22', b: '#6a5a3a', plain: 0x4c5638 },
+  ch2:  { base: '#8c8355', a: '#5e6140', b: '#a09666', plain: 0x7f7650 },
+  lec:  { base: '#a8946b', a: '#7a6a48', b: '#c0ae86', plain: 0xa08e66 }
+};
+function makeMats(key) {
+  const st = MODEL_STYLE[key], L = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o || {}));
+  const camo = L(0xffffff, { map: camoTexture(st.base, st.a, st.b, 7 + (key.charCodeAt(0) * 31 + key.length * 13) % 997) });
+  return {
+    camo, body: L(st.plain), dark: L(0x1f2427), rubber: L(0x16191b), steel: L(0x4a5256), barrel: L(0x2b312c), sleeve: L(0x3d4540),
+    era: L(new THREE.Color(st.plain).multiplyScalar(0.8)), eraIn: L(new THREE.Color(st.plain).multiplyScalar(0.55)),
+    glass: new THREE.MeshLambertMaterial({ color: 0x0c1418, emissive: 0x0a1e26 }), red: new THREE.MeshLambertMaterial({ color: 0x5a1812, emissive: 0x2a0806 }),
+    wood: L(0x3b3327), tan: L(new THREE.Color(st.plain).multiplyScalar(1.15))
+  };
+}
+function smoothNormals(g, crease) {
+  const pos = g.attributes.position, n = pos.count; g.computeVertexNormals();
+  const fn = g.attributes.normal, cs = Math.cos(crease || 1.0), map = new Map(), key = i => Math.round(pos.getX(i) * 500) + ',' + Math.round(pos.getY(i) * 500) + ',' + Math.round(pos.getZ(i) * 500);
+  for (let i = 0; i < n; i++) { const k = key(i); let a = map.get(k); if (!a) map.set(k, a = []); a.push(i); }
+  const out = new Float32Array(n * 3);
+  for (const grp of map.values()) for (const i of grp) {
+    let x = 0, y = 0, z = 0; const nx = fn.getX(i), ny = fn.getY(i), nz = fn.getZ(i);
+    for (const j of grp) { const mx = fn.getX(j), my = fn.getY(j), mz = fn.getZ(j); if (nx * mx + ny * my + nz * mz >= cs) { x += mx; y += my; z += mz; } }
+    const l = Math.hypot(x, y, z) || 1; out[i * 3] = x / l; out[i * 3 + 1] = y / l; out[i * 3 + 2] = z / l;
+  }
+  g.setAttribute('normal', new THREE.BufferAttribute(out, 3)); return g;
+}
+function roundPoly(pts, r, n) {
+  n = n || 5; const out = [], N = pts.length;
+  for (let i = 0; i < N; i++) {
+    const P = pts[i], A = pts[(i + N - 1) % N], B = pts[(i + 1) % N], la = Math.hypot(A[0] - P[0], A[1] - P[1]), lb = Math.hypot(B[0] - P[0], B[1] - P[1]), ta = Math.min(0.45, r / la), tb = Math.min(0.45, r / lb);
+    const p1 = [P[0] + (A[0] - P[0]) * ta, P[1] + (A[1] - P[1]) * ta], p2 = [P[0] + (B[0] - P[0]) * tb, P[1] + (B[1] - P[1]) * tb];
+    for (let k = 0; k <= n; k++) { const u = k / n, a = (1 - u) * (1 - u), b = 2 * u * (1 - u), c = u * u; out.push([a * p1[0] + b * P[0] + c * p2[0], a * p1[1] + b * P[1] + c * p2[1]]); }
+  }
+  return out;
+}
+function _rbox(x, y, z, r) {
+  const b = Math.min(r, x * 0.3, y * 0.3, z * 0.3), cr = Math.min(Math.min(x, y) * 0.22, 0.12), w = x - 2 * b, h = y - 2 * b, sh = new THREE.Shape();
+  const x0 = -w / 2, y0 = -h / 2, c = Math.max(0.001, Math.min(cr, w / 2 - 0.001, h / 2 - 0.001));
+  sh.moveTo(x0 + c, y0); sh.lineTo(-x0 - c, y0); sh.quadraticCurveTo(-x0, y0, -x0, y0 + c); sh.lineTo(-x0, -y0 - c); sh.quadraticCurveTo(-x0, -y0, -x0 - c, -y0); sh.lineTo(x0 + c, -y0); sh.quadraticCurveTo(x0, -y0, x0, -y0 - c); sh.lineTo(x0, y0 + c); sh.quadraticCurveTo(x0, y0, x0 + c, y0);
+  const depth = z - 2 * b, g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: true, bevelSize: b, bevelThickness: b, bevelSegments: 2, curveSegments: 3, steps: 1 });
+  g.translate(0, 0, -depth / 2); return smoothNormals(g, 1.0);
+}
+const _box = (x, y, z) => { const m = Math.min(x, y, z); return m < 0.07 ? new THREE.BoxGeometry(x, y, z) : _rbox(x, y, z, Math.min(0.06, m * 0.3)); };
+const _cyl = (r1, r2, h, n) => new THREE.CylinderGeometry(r1, r2, h, Math.max(n || 16, 20));
+const _cylX = (r, h, n) => { const g = _cyl(r, r, h, n); g.rotateZ(Math.PI / 2); return g; };
+const _cylZ = (r, h, n) => { const g = _cyl(r, r, h, n); g.rotateX(Math.PI / 2); return g; };
+function put(parent, geo, mat, p, r, shadow) {
+  const m = new THREE.Mesh(geo, mat); if (p) m.position.set(p[0], p[1], p[2]); if (r) m.rotation.set(r[0], r[1], r[2], 'YXZ');
+  m.castShadow = shadow !== false; m.receiveShadow = true; parent.add(m); return m;
+}
+/* yan profili (z, y) x genişlik; gövde ve palet için */
+function prismSide(pts, width, bevel) {
+  const sh = new THREE.Shape(); pts.forEach((p, i) => i ? sh.lineTo(p[0], p[1]) : sh.moveTo(p[0], p[1]));
+  const depth = width - 2 * bevel;
+  const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: bevel > 0, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 4, curveSegments: 6, steps: 1 });
+  g.rotateY(-Math.PI / 2); g.translate(depth / 2, 0, 0); return smoothNormals(g, 1.0);
+}
+/* üst görünüş (x, z) x yükseklik; kule için */
+function prismTop(pts, height, bevel) {
+  const sh = new THREE.Shape(); pts.forEach((p, i) => i ? sh.lineTo(p[0], -p[1]) : sh.moveTo(p[0], -p[1]));
+  const depth = height - 2 * bevel;
+  const g = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: bevel > 0, bevelSize: bevel, bevelThickness: bevel, bevelSegments: 4, curveSegments: 6, steps: 1 });
+  g.rotateX(-Math.PI / 2); g.translate(0, bevel, 0); return smoothNormals(g, 1.0);
+}
+function domeGeo(rx, rz, cz, h, front) {
+  const pts = []; const prof = [[1.0, 0], [1.0, 0.3], [0.97, 0.52], [0.9, 0.7], [0.77, 0.85], [0.6, 0.94], [0.38, 0.985], [0.12, 1.0], [0, 1.0]];
+  for (const p of prof) pts.push(new THREE.Vector2(p[0], p[1] * h));
+  const g = new THREE.LatheGeometry(pts, 36); const pos = g.attributes.position;
+  for (let i = 0; i < pos.count; i++) { let z = pos.getZ(i) * rz; if (z > 0) z *= front || 1; pos.setXYZ(i, pos.getX(i) * rx, pos.getY(i), z + cz); }
+  g.computeVertexNormals(); return g;
+}
+function stadium(zc, r, y0, y1) {
+  const sh = new THREE.Shape(), h = (y1 - y0) / 2, yc = y0 + h;
+  sh.moveTo(-zc, y0); sh.lineTo(zc, y0); sh.absarc(zc, yc, h, -Math.PI / 2, Math.PI / 2, false); sh.lineTo(-zc, y1); sh.absarc(-zc, yc, h, Math.PI / 2, Math.PI * 1.5, false);
+  return sh.getPoints(10).map(p => [p.x, p.y]);
+}
+function ovalPts(cx, cz, rx, rz, n) { const o = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; o.push([cx + rx * Math.cos(a), cz + rz * Math.sin(a)]); } return o; }
+
+const VIS = {
+  t90: { fam: 'rus', nW: 6, wz0: -2.6, wst: 1.04, wr: 0.4, skirt: 'seg', tH: 0.95 },
+  t72: { fam: 'rus', nW: 6, wz0: -2.6, wst: 1.04, wr: 0.4, skirt: 'seg', tH: 0.95 },
+  t55: { fam: 'rus', nW: 5, wz0: -2.25, wst: 1.12, wr: 0.42, skirt: 'none', tH: 0.78 },
+  m1:  { fam: 'west', nW: 7, wz0: -2.85, wst: 0.95, wr: 0.38, skirt: 'heavy', tH: 1.0, bus: [2.2, 0.8, 0.72], prof: [[-3.45, 0.5], [3.0, 0.5], [3.45, 0.95], [2.3, 1.5], [-3.3, 1.5], [-3.5, 1.35]] },
+  leo: { fam: 'west', nW: 7, wz0: -2.85, wst: 0.95, wr: 0.38, skirt: 'heavy', tH: 0.98, bus: [2.0, 0.8, 0.7], prof: [[-3.45, 0.5], [3.0, 0.5], [3.4, 0.9], [2.05, 1.5], [-3.3, 1.5], [-3.5, 1.35]] },
+  ch2: { fam: 'west', nW: 6, wz0: -2.6, wst: 1.06, wr: 0.45, skirt: 'heavy', tH: 1.1, bus: [2.3, 0.88, 0.8], prof: [[-3.4, 0.5], [3.0, 0.5], [3.4, 1.0], [2.25, 1.5], [-3.3, 1.5], [-3.5, 1.3]] },
+  lec: { fam: 'west', nW: 6, wz0: -2.6, wst: 1.04, wr: 0.42, skirt: 'heavy', tH: 0.9, bus: [1.7, 0.75, 0.66], prof: [[-3.3, 0.5], [2.95, 0.5], [3.3, 0.9], [2.1, 1.47], [-3.1, 1.47], [-3.3, 1.3]] }
+};
+function turretOutline(key, tb) {
+  switch (key) {
+    case 't90': return [[-0.65, 1.75], [0.65, 1.75], [1.35, 1.47], [1.03, 0.55], [1.05, -1.35], [-1.05, -1.35], [-1.03, 0.55], [-1.35, 1.47]];
+    case 't72': return ovalPts(0, 0.15, 1.2, 1.6, 26);
+    case 't55': return ovalPts(0, 0.05, 1.08, 1.45, 24);
+    case 'm1':  return [[-0.55, 1.85], [0.55, 1.85], [1.45, 0.95], [1.5, -1.3], [1.15, tb], [-1.15, tb], [-1.5, -1.3], [-1.45, 0.95]];
+    case 'leo': return [[-0.85, 1.9], [0.85, 1.9], [1.6, 1.15], [1.45, -1.2], [1.1, tb], [-1.1, tb], [-1.45, -1.2], [-1.6, 1.15]];
+    case 'ch2': return [[-0.75, 1.85], [0.75, 1.85], [1.55, 1.4], [1.58, -1.0], [1.25, tb], [-1.25, tb], [-1.58, -1.0], [-1.55, 1.4]];
+    default:    return [[-0.6, 1.72], [0.6, 1.72], [1.35, 0.9], [1.45, -1.2], [1.0, tb], [-1.0, tb], [-1.45, -1.2], [-1.35, 0.9]];
+  }
+}
+function buildVisual(t, M, grp, key) {
+  const P = t.P, hull = grp.hull, tur = grp.turret, gun = grp.gun, hw = P.hw, V = VIS[key], RUS = V.fam === 'rus', WEST = !RUS, T90 = key === 't90', T72 = key === 't72', T55 = key === 't55';
+  /* ---- gövde ---- */
+  const prof = V.prof || (T55 ? [[-3.1, 0.5], [2.85, 0.5], [3.2, 0.88], [2.0, 1.47], [-2.95, 1.47], [-3.15, 1.3]] : [[-3.3, 0.5], [2.95, 0.5], [3.3, 0.9], [2.1, 1.47], [-3.05, 1.47], [-3.3, 1.3]]);
+  put(hull, prismSide(roundPoly(prof, 0.3, 5), hw * 2, 0.07), M.camo);
+  /* Zırhı tek bir gövde yüzeyi gibi göstermemek için gerçek tanklardaki ana plaka ayrımlarını belirginleştir. */
+  const glacisAngle = Math.atan2(0.55, 1.2);
+  // Alt ön plaka: daha dik, ayrı bir kalın çelik parça.
+  put(hull, _box(hw * 1.86, 0.085, 0.56), M.body, [0, 0.72, 3.075], [-48.8 * DEG, 0, 0]);
+  put(hull, _box(hw * 1.68, 0.018, 0.49), M.camo, [0, 0.72, 3.035], [-48.8 * DEG, 0, 0], false);
+  // Üst eğimli glacis; ince kenar çizgileri plakayı gövdeden ayırır.
+  put(hull, _box(hw * 1.92, 0.22, 1.34), M.body, [0, 1.175, 2.70], [glacisAngle, 0, 0]);
+  put(hull, _box(hw * 1.78, 0.018, 1.18), M.camo, [0, 1.175, 2.66], [glacisAngle, 0, 0], false);
+  // Ön tavan ve motor güvertesindeki ayrı servis panelleri.
+  put(hull, _box(0.92, 0.045, 0.66), M.body, [-0.52, 1.51, 1.78], [0.02, 0.04, 0]);
+  put(hull, _box(0.92, 0.045, 0.66), M.body, [0.52, 1.51, 1.78], [0.02, -0.04, 0]);
+  for (const sx of [-1, 1]) {
+    put(hull, _box(0.62, 0.035, 1.38), M.dark, [sx * 0.58, 1.535, -1.72], null, false);
+    for (let i = 0; i < 6; i++) put(hull, _box(0.58, 0.018, 0.055), M.steel, [sx * 0.58, 1.56, -2.18 + i * 0.18], null, false);
+  }
+  /* palet, tekerlek, etek */
+  const nW = V.nW, wz0 = V.wz0, wst = V.wst, wr = V.wr;
+  const trackGeo = prismSide(stadium(2.9, 0.44, 0.02, 0.9), 0.56, 0.035);
+  const cleat = _box(0.5, 0.04, 0.075);
+  for (const sx of [-1, 1]) {
+    const xc = sx * (hw + 0.35);
+    put(hull, trackGeo, M.rubber, [xc, 0, 0]);
+    const inst = new THREE.InstancedMesh(cleat, M.rubber, 90), mt = new THREE.Matrix4(); let k = 0;
+    for (let z = -2.9; z <= 2.91; z += 0.13) { mt.makeTranslation(xc, 0.915, z); inst.setMatrixAt(k++, mt); mt.makeTranslation(xc, 0.005, z); inst.setMatrixAt(k++, mt); }
+    inst.count = k; inst.castShadow = true; hull.add(inst);
+    for (let i = 0; i < nW; i++) {
+      const z = wz0 + i * wst, wx = sx * (hw + 0.66);
+      put(hull, _cylX(wr, 0.15, 20), M.rubber, [wx, 0.46, z]);
+      put(hull, _cylX(wr * 0.68, 0.18, 16), M.steel, [wx + sx * 0.005, 0.46, z]);
+      put(hull, _cylX(0.1, 0.21, 10), M.dark, [wx + sx * 0.01, 0.46, z]);
+    }
+    if (T55 || key === 'lec' || key === 'ch2') for (let i = 0; i < 3; i++) put(hull, _cylX(0.1, 0.14, 10), M.rubber, [sx * (hw + 0.66), 0.9, -1.8 + i * 1.7]);
+    put(hull, _cylX(0.34, 0.2, 18), M.steel, [sx * (hw + 0.66), 0.5, -3.0]);
+    put(hull, _cylX(0.39, 0.16, 18), M.rubber, [sx * (hw + 0.66), 0.5, 3.0]);
+    if (V.skirt === 'seg') {
+      for (const z of [-2.35, -1.18, 0, 1.18, 2.35]) {
+        put(hull, _box(0.075, 0.42, 1.12), M.body, [sx * (hw + 0.78), 0.84, z]);
+        put(hull, _box(0.085, 0.035, 1.08), M.eraIn, [sx * (hw + 0.785), 0.64, z], null, false);
+      }
+    } else if (V.skirt === 'heavy') {
+      for (const z of [-2.55, -0.85, 0.85, 2.3]) {
+        put(hull, _box(0.115, 0.64, z > 2 ? 1.2 : 1.62), M.camo, [sx * (hw + 0.8), 0.84, z]);
+        put(hull, _box(0.025, 0.54, z > 2 ? 1.08 : 1.48), M.body, [sx * (hw + 0.865), 0.84, z], null, false);
+      }
+    }
+    put(hull, _box(0.7, 0.04, 6.3), M.body, [sx * (hw + 0.33), 1.03, 0], [0, 0, 0]);
+    put(hull, _box(0.7, 0.04, 0.55), M.body, [sx * (hw + 0.33), 0.97, 3.3], [0.35, 0, 0]);
+    put(hull, _cylZ(0.09, 0.14, 10), M.dark, [sx * (hw + 0.2), 1.12, 3.05]);
+    put(hull, _cylZ(0.02, 5.8, 6), M.dark, [sx * (hw + 0.08), 1.075, 0]);
+  }
+  /* Görsel yükseltme: dış zırh modülleri, kaynak çizgileri, bağlantı civataları ve çamurluk detayları */
+  const detailMat = M.body, edgeDark = M.dark, highlight = M.steel;
+  // Yan etekleri tek düz şerit yerine ayrı, kalın segmentler olarak göster.
+  for (const sx of [-1, 1]) {
+    for (let i = 0; i < 7; i++) {
+      const z = -2.45 + i * 0.79;
+      const h = (i === 0 || i === 6) ? 0.34 : 0.43;
+      put(hull, _box(0.095, h, 0.72), i % 2 ? M.body : M.camo, [sx * (hw + 0.83), 0.82, z], [0, 0, (i === 0 || i === 6) ? sx * -0.06 : 0]);
+      put(hull, _box(0.025, 0.035, 0.58), M.dark, [sx * (hw + 0.89), 0.62, z], null, false);
+      for (const dz of [-0.26, 0.26]) put(hull, _cylX(0.035, 0.025, 8), highlight, [sx * (hw + 0.9), 0.96, z + dz], null, false);
+    }
+    // Palet üstündeki çamurluk kenarı ve küçük tutucu parçalar.
+    put(hull, _box(0.16, 0.07, 5.8), M.dark, [sx * (hw + 0.48), 1.25, 0], null, false);
+    for (let i = 0; i < 9; i++) put(hull, _box(0.12, 0.035, 0.08), highlight, [sx * (hw + 0.5), 1.30, -2.65 + i * 0.66], null, false);
+  }
+  // Ön alt zırhın görünür yatay ek yeri ve çekme kancaları.
+  put(hull, _box(hw * 1.7, 0.035, 0.045), M.dark, [0, 0.69, 3.12], [-0.82, 0, 0], false);
+  for (const sx of [-1, 1]) {
+    put(hull, _cylX(0.11, 0.16, 12), M.dark, [sx * (hw * 0.72), 0.61, 3.17], [0, 0, Math.PI / 2]);
+    put(hull, _cylX(0.065, 0.17, 12), highlight, [sx * (hw * 0.72), 0.61, 3.17], [0, 0, Math.PI / 2], false);
+  }
+  // Kule üstü servis kapakları, kalın kapak kenarları ve bağlantı civataları.
+  for (const sx of [-1, 1]) {
+    put(tur, _box(0.54, 0.055, 0.66), M.body, [sx * 0.72, 0.78, -0.62], [0.02, sx * 0.06, 0]);
+    put(tur, _box(0.46, 0.018, 0.56), M.dark, [sx * 0.72, 0.815, -0.62], null, false);
+    for (let i = 0; i < 4; i++) put(tur, _cyl(0.025, 0.025, 0.025, 8), highlight, [sx * 0.72 + (i % 2 ? 0.18 : -0.18), 0.83, -0.82 + Math.floor(i / 2) * 0.4], null, false);
+  }
+  // Daha belirgin reaktif zırh karoları: Rus tanklarında kule önünde, Batı tanklarında eğimli yanaklarda.
+  if (!T55) {
+    const rows = RUS ? 2 : 2, cols = RUS ? 5 : 3;
+    for (const sx of [-1, 1]) for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = sx * (RUS ? 0.48 + c * 0.19 : 1.02 + c * 0.15);
+      const z = RUS ? 1.26 - c * 0.06 : 1.18 - c * 0.08;
+      const y = 0.72 + r * 0.19;
+      put(tur, _box(RUS ? 0.18 : 0.22, 0.15, RUS ? 0.28 : 0.30), (r + c) % 3 === 0 ? M.era : M.body, [x, y, z], [0.08, -sx * 0.12, sx * 0.08]);
+      put(tur, _box(RUS ? 0.13 : 0.16, 0.018, RUS ? 0.22 : 0.23), M.eraIn, [x, y + 0.078, z], [0.08, -sx * 0.12, sx * 0.08], false);
+    }
+  }
+  /* arka güverte */
+  for (const sx of [-1, 1]) put(hull, _box(0.8, 0.025, 1.2), M.dark, [sx * 0.5, 1.505, -1.55]);
+  if (RUS) {
+    put(hull, _cylX(0.17, 2.1, 10), M.wood, [0, 1.66, -2.95]);
+    if (T55) { put(hull, _cylZ(0.22, 0.9, 12), M.dark, [-0.7, 1.7, -2.5]); put(hull, _cylZ(0.22, 0.9, 12), M.dark, [0.7, 1.7, -2.5]); }
+    else { put(hull, _cylZ(0.2, 1.3, 12), M.body, [-0.82, 1.7, -2.2]); put(hull, _cylZ(0.2, 1.3, 12), M.body, [0.82, 1.7, -2.2]); }
+  } else {
+    put(hull, _box(1.9, 0.12, 0.9), M.dark, [0, 1.58, -2.5]);
+    put(hull, _box(1.6, 0.32, 0.5), M.body, [0, 1.68, -3.0]);
+  }
+  put(hull, _cylZ(0.11, 0.6, 10), M.dark, [-0.5, 1.58, -3.1]);
+  /* ön: sürücü kapağı, periskoplar, çamurluk kanadı */
+  put(hull, _cyl(0.3, 0.3, 0.09, 16), M.body, [0, 1.52, 2.4]);
+  for (const x of [-0.32, 0, 0.32]) put(hull, _box(0.15, 0.09, 0.07), M.glass, [x, 1.57, 2.66]);
+  if (RUS && !T55) put(hull, _box(1.7, 0.36, 0.03), M.body, [0, 1.12, 3.2], [0.5, 0, 0]);
+  if (T55) put(hull, _box(1.5, 0.3, 0.03), M.body, [0, 1.1, 3.1], [0.5, 0, 0]);
+  if (WEST) put(hull, _box(0.7, 0.2, 0.5), M.body, [0.0, 1.62, 2.5]);
+  /* ---- kule ---- */
+  const tb = P.turBack;
+  if (key === 't72') put(tur, domeGeo(1.22, 1.5, 0.15, V.tH, 1.18), M.camo);
+  else if (T55) put(tur, domeGeo(1.1, 1.4, 0.05, V.tH, 1.2), M.camo);
+  else put(tur, prismTop(roundPoly(turretOutline(key, tb), T90 ? 0.28 : 0.3, 5), V.tH - 0.1, 0.1), M.camo);
+  // Ayrı kompozit yanak modülleri: Rus kulelerinde küçük ve yuvarlak, Batı kulelerinde daha geniş ve köşeli.
+  if (!T55) {
+    for (const sx of [-1, 1]) {
+      const westCheek = WEST;
+      const cheekX = sx * (westCheek ? 1.13 : 0.82);
+      const cheekZ = westCheek ? 0.92 : 1.12;
+      const cheekW = westCheek ? 0.48 : 0.34;
+      const cheekH = westCheek ? 0.64 : 0.48;
+      const cheekD = westCheek ? 1.22 : 0.88;
+      put(tur, _box(cheekW, cheekH, cheekD), M.body, [cheekX, 0.57, cheekZ], [0, -sx * (westCheek ? 0.18 : 0.28), sx * 0.04]);
+      put(tur, _box(cheekW * 0.78, 0.025, cheekD * 0.78), M.camo, [cheekX, 0.57 + cheekH * 0.5, cheekZ], [0, -sx * (westCheek ? 0.18 : 0.28), 0], false);
+    }
+  }
+  /* kule arka sandık */
+  if (WEST) { const b = V.bus; put(tur, _box(b[0], b[1], b[2]), M.body, [0, 0.55 + (b[1] - 0.75) / 2, tb - b[2] / 2 + 0.05]); put(tur, _box(b[0] * 0.8, 0.03, b[2] * 0.7), M.dark, [0, 0.55 + b[1] / 2 + 0.17, tb - b[2] / 2], null, false); }
+  else if (!T55) { put(tur, _box(1.7, 0.42, 0.6), M.body, [0, 0.5, -1.65]); for (const x of [-0.6, -0.2, 0.2, 0.6]) put(tur, _box(0.03, 0.4, 0.55), M.dark, [x, 0.5, -1.66], null, false); }
+  else { put(tur, _box(1.3, 0.3, 0.3), M.body, [0, 0.35, -1.35]); }
+  /* komutan kupolu */
+  const cx = 0.5, cy = T55 ? 0.82 : 0.95, cz = T55 ? -0.2 : -0.3;
+  put(tur, _cyl(T55 ? 0.3 : 0.36, T55 ? 0.32 : 0.38, 0.2, 18), M.body, [cx, cy + 0.1, cz]);
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; put(tur, _box(0.12, 0.08, 0.04), M.glass, [cx + Math.sin(a) * (T55 ? 0.31 : 0.37), cy + 0.2, cz + Math.cos(a) * (T55 ? 0.31 : 0.37)], [0, a, 0], false); }
+  put(tur, _cyl(0.27, 0.27, 0.05, 14), M.camo, [cx, cy + 0.23, cz]);
+  /* NSVT / DShK */
+  if (RUS) { put(tur, _box(0.18, 0.2, 0.3), M.dark, [cx + 0.0, cy + 0.38, cz + 0.15]); put(tur, _cylZ(0.025, 1.05, 8), M.dark, [cx, cy + 0.42, cz + 0.8]); }
+  /* nişancı dürbünü */
+  const sxp = -0.5;
+  if (!T55) {
+    put(tur, _box(0.44, 0.28, 0.55), M.camo, [sxp, 1.1, 0.88]);
+    put(tur, _box(0.34, 0.16, 0.02), M.glass, [sxp, 1.12, 1.17], null, false);
+    put(tur, _box(0.2, 0.12, 0.2), M.dark, [sxp, 1.28, 0.8]);
+  } else { put(tur, _box(0.3, 0.2, 0.4), M.dark, [sxp, 0.9, 0.7]); put(tur, _cyl(0.26, 0.26, 0.12, 14), M.body, [-0.45, 0.82, -0.3]); }
+  /* duman bombası atıcıları */
+  if (!T55) for (const sx of [-1, 1]) for (let i = 0; i < 4; i++) put(tur, _cylZ(0.05, 0.28, 8), M.dark, [sx * (WEST ? 1.28 : 1.12), 0.93, 0.2 + i * 0.13], [0.7, 0, 0], false);
+  /* anten, rüzgâr sensörü */
+  put(tur, _cyl(0.012, 0.012, 2.3, 6), M.dark, [0.85, 1.95, T55 ? -1.0 : -1.2], [-0.1, 0, 0.04], false);
+  if (!T55) { put(tur, _cyl(0.025, 0.025, 0.5, 6), M.dark, [0, 1.2, -0.9], null, false); put(tur, _cylX(0.06, 0.02, 8), M.dark, [0, 1.46, -0.9], null, false); }
+  if (T90) {
+    for (const sx of [-1, 1]) {
+      const g = new THREE.Group(); g.position.set(sx * 0.78, 0.7, 1.67); g.rotation.set(0, sx * 22 * DEG, 0); tur.add(g);
+      put(g, _box(0.36, 0.36, 0.3), M.body, [0, 0, 0]); put(g, _box(0.3, 0.3, 0.025), M.red, [0, 0, 0.16], null, false);
+      put(g, _cylZ(0.07, 0.03, 10), M.glass, [0, 0, 0.175], null, false);
+    }
+    for (const x of [-0.45, -0.15, 0.15, 0.45]) put(tur, _box(0.28, 0.07, 0.4), M.era, [x, 0.98, 1.45], [0.12, 0, 0], false);
+  } else if (T72) {
+    put(tur, _box(0.4, 0.34, 0.34), M.dark, [-0.62, 0.72, 1.6]);
+    put(tur, _cylZ(0.12, 0.1, 12), M.glass, [-0.62, 0.72, 1.78], null, false);
+  } else if (T55) {
+    put(tur, _box(0.34, 0.26, 0.34), M.dark, [0.7, 0.55, 1.45]); put(tur, _cylZ(0.11, 0.1, 12), M.red, [0.7, 0.55, 1.64], null, false);
+  } else if (key === 'm1') {
+    put(tur, _box(0.5, 0.36, 0.5), M.dark, [-0.5, 1.28 + (V.tH - 1) / 2, -0.15]); put(tur, _box(0.4, 0.18, 0.02), M.glass, [-0.5, 1.3, 0.12], null, false);
+    put(tur, _box(0.3, 0.22, 0.4), M.body, [0.62, 1.12, 0.35]);
+    for (const sx of [-1, 1]) put(tur, _box(0.12, 0.5, 0.9), M.camo, [sx * 1.15, 0.55, 1.15], [0, sx * 0.62, 0], true);
+  } else if (key === 'leo') {
+    for (const sx of [-1, 1]) put(tur, _box(0.75, 0.95, 0.55), M.camo, [sx * 1.33, 0.52, 1.5], [0, sx * 0.5, 0]);
+    put(tur, _box(0.5, 0.3, 0.4), M.dark, [-0.55, 1.15, 0.9]); put(tur, _box(0.3, 0.2, 0.3), M.body, [0.7, 1.12, 0.3]);
+    put(tur, _cylZ(0.1, 0.4, 10), M.glass, [-0.55, 1.15, 1.12], null, false);
+  } else if (key === 'ch2') {
+    for (const sx of [-1, 1]) put(tur, _box(0.34, 0.5, 1.9), M.body, [sx * 1.7, 0.55, -0.35]);
+    put(tur, _box(0.5, 0.34, 0.5), M.dark, [-0.5, 1.25, 0.2]); put(tur, _box(0.34, 0.16, 0.02), M.glass, [-0.5, 1.27, 0.46], null, false);
+    put(tur, _box(0.3, 0.2, 0.3), M.body, [0.75, 1.2, 0.5]);
+  } else if (key === 'lec') {
+    put(tur, _box(0.34, 0.3, 0.34), M.dark, [0.0, 1.05, -0.4]); put(tur, _cylZ(0.08, 0.18, 10), M.glass, [0, 1.05, -0.22], null, false);
+    put(tur, _box(0.4, 0.2, 0.4), M.dark, [-0.45, 1.0, 0.7]); put(tur, _box(0.28, 0.22, 0.36), M.body, [0.7, 0.98, 0.35]);
+  }
+  /* ---- top ---- */
+  const bar = P.bar, kr = T55 ? 0.82 : WEST ? 1.08 : 1, sleeveEnd = 0.6 + 2.7 * (bar / 4.2), bEnd = bar - 0.025;
+  put(gun, _cylX(0.3, 1.02, 20), T90 || WEST ? M.camo : M.body, [0, 0, 0.25]);
+  put(gun, _cylZ(0.13 * kr, 0.56, 14), M.steel, [0, 0, 0.62]);
+  if (!T55) {
+    put(gun, _cylZ(0.098 * kr, sleeveEnd - 0.6, 14), M.sleeve, [0, 0, (sleeveEnd + 0.6) / 2]);
+    for (const f of [0.24, 0.42, 0.6]) put(gun, _cylZ(0.108 * kr, 0.07, 14), M.dark, [0, 0, 0.6 + (sleeveEnd - 0.6) * (f + 0.12)], null, false);
+  } else {
+    put(gun, _cylZ(0.12, 0.5, 12), M.sleeve, [0, 0, 0.58 + bar * 0.52]);
+    put(gun, _box(0.34, 0.28, 0.32), M.dark, [0.42, 0.22, 0.95]); put(gun, _cylZ(0.1, 0.1, 10), M.red, [0.42, 0.22, 1.13], null, false);
+  }
+  put(gun, _cylZ(0.078 * kr, bEnd - 0.425, 12), M.barrel, [0, 0, (bEnd + 0.425) / 2], null, false);
+  if (!T55 && RUS) put(gun, _cylZ(0.122, 0.46, 14), M.sleeve, [0, 0, bar * 0.714]);
+  put(gun, _cylZ(0.088 * kr, 0.14, 12), M.dark, [0, 0, bar - 0.08], null, false);
+  if (WEST) { const bar_ = gun.children.find(c => c.geometry && c.geometry.parameters && c.geometry.parameters.height === 1.02); if (bar_) bar_.scale.set(1, 1.05, 0.9); }
+}
+/* ======================= Yıkık şehir: bina panelleri, yıkım, çarpışma, yol bulma ======================= */
+const _CE = (typeof module !== 'undefined') ? require('./engine3d.js') : null;
+const _mkTerr = _CE ? _CE.makeTerrain : makeTerrain;
+const _cl = (v, a, b) => v < a ? a : v > b ? b : v;
+
+function makeCity(seed) {
+  let s = (seed >>> 0) || 1;
+  const R = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const rr = (a, b) => a + (b - a) * R(), ri = (a, b) => Math.floor(rr(a, b + 1));
+  const HALF = 330, FH = 3.2, SL = 0.25, TW = 0.42;
+  const city = { pieces: [], buildings: [], events: [], rubble: [], cars: [], posts: [], barriers: [], craters: [], smokers: [], half: HALF, navDirty: true, R };
+
+  /* ---- arazi: şehir içi neredeyse düz, krater çukurlu ---- */
+  const base = _mkTerr(seed);
+  const craters = city.craters;
+  const craterH = (x, z) => {
+    let h = 0;
+    for (let i = 0; i < craters.length; i++) {
+      const c = craters[i], dx = x - c.x, dz = z - c.z, rm = c.r * 1.45; if (dx > rm || dx < -rm || dz > rm || dz < -rm) continue;
+      const u = Math.hypot(dx, dz) / c.r;
+      if (u < 1) h -= c.d * (1 - u * u) * (1 - u * u); else if (u < 1.45) { const k = 1 - (u - 1) / 0.45; h += 0.22 * c.d * k * k; }
+    }
+    return h;
+  };
+  const th = (x, z) => { const m = _cl((Math.max(Math.abs(x), Math.abs(z)) - 230) / 130, 0, 1); return base.h(x, z) * (0.02 + 0.16 * m) + craterH(x, z); };
+  const tn = (x, z) => { const e = 1.2; const a = [th(x - e, z) - th(x + e, z), 2 * e, th(x, z - e) - th(x, z + e)], l = Math.hypot(a[0], a[1], a[2]); return [a[0] / l, a[1] / l, a[2] / l]; };
+  city.terrain = { h: th, normal: tn, R };
+
+  /* ---- bina üretimi ---- */
+  function addPiece(b, kind, mat, x0, y0, z0, x1, y1, z1, f, ring, extra) {
+    const p = { id: city.pieces.length, b: b.id, kind, mat, bb: [x0, y0, z0, x1, y1, z1], f, ring, alive: true, below: [], soot: 0, ground: false, sup: true, ...extra };
+    city.pieces.push(p); b.ids.push(p.id); return p;
+  }
+  function genBuilding(cx, cz, W, D, F, style, dmg, opts) {
+    opts = opts || {};
+    const b = { id: city.buildings.length, cx, cz, W, D, F, style, ids: [], dirty: false, alive: 0, bb: [cx - W / 2, 0, cz - D / 2, cx + W / 2, F * FH, cz + D / 2], rings: [], tiles: [] };
+    city.buildings.push(b);
+    const bw = 4.5, nbx = Math.max(2, Math.round(W / bw)), nbz = Math.max(2, Math.round(D / bw));
+    const x0 = cx - W / 2, x1 = cx + W / 2, z0 = cz - D / 2, z1 = cz + D / 2;
+    const sides = [
+      { n: nbx, f: i => [x0 + W * i / nbx, x0 + W * (i + 1) / nbx], box: (a0, a1, y0, y1) => [a0, y0, z0, a1, y1, z0 + TW] },
+      { n: nbz, f: i => [z0 + TW + (D - 2 * TW) * i / nbz, z0 + TW + (D - 2 * TW) * (i + 1) / nbz], box: (a0, a1, y0, y1) => [x1 - TW, y0, a0, x1, y1, a1] },
+      { n: nbx, f: i => [x1 - W * (i + 1) / nbx, x1 - W * i / nbx], box: (a0, a1, y0, y1) => [a0, y0, z1 - TW, a1, y1, z1] },
+      { n: nbz, f: i => [z1 - TW - (D - 2 * TW) * (i + 1) / nbz, z1 - TW - (D - 2 * TW) * i / nbz], box: (a0, a1, y0, y1) => [x0, y0, a0, x0 + TW, y1, a1] }
+    ];
+    let ring = 0; const ringOf = [];
+    for (let f = 0; f < F; f++) {
+      ring = 0;
+      for (const sd of sides) for (let i = 0; i < sd.n; i++, ring++) {
+        const [a0, a1] = sd.f(i), yb = f * FH, yt = f * FH + FH - SL, m = (a0 + a1) / 2;
+        const kindW = R(); let typ = 'solid';
+        if (f === 0 && kindW < 0.2) typ = 'door'; else if (kindW < 0.78) typ = 'win';
+        if (opts.windows === false) typ = 'solid';
+        const mk = (p0, p1, y0, y1) => { const bx = sd.box(p0, p1, yb + y0, yb + y1); return addPiece(b, 0, style, bx[0], bx[1], bx[2], bx[3], bx[4], bx[5], f, ring, { bay: ring }); };
+        const made = [];
+        if (typ === 'solid') made.push(mk(a0, a1, 0, yt - yb));
+        else {
+          const ww = typ === 'door' ? 2.0 : (a1 - a0) * 0.46, w0 = m - ww / 2, w1 = m + ww / 2;
+          made.push(mk(a0, w0, 0, yt - yb), mk(w1, a1, 0, yt - yb));
+          if (typ === 'win') made.push(mk(w0, w1, 0, 0.9));
+          made.push(mk(w0, w1, typ === 'door' ? 2.5 : 2.4, yt - yb));
+        }
+        for (const p of made) { p.ground = f === 0; ringOf[f] = ringOf[f] || {}; (ringOf[f][ring] = ringOf[f][ring] || []).push(p.id); }
+      }
+    }
+    b.nring = ring; b.ringOf = ringOf;
+    /* yatay komşuluk (halka) */
+    /* döşemeler: 1..F (F = çatı) */
+    const iw = W - 2 * TW, id_ = D - 2 * TW, tnx = Math.max(1, Math.round(iw / 6)), tnz = Math.max(1, Math.round(id_ / 6));
+    const slabs = [];
+    for (let f = 1; f <= F; f++) {
+      slabs[f] = [];
+      for (let i = 0; i < tnx; i++) for (let j = 0; j < tnz; j++) {
+        const sx0 = x0 + TW + iw * i / tnx, sx1 = x0 + TW + iw * (i + 1) / tnx, sz0 = z0 + TW + id_ * j / tnz, sz1 = z0 + TW + id_ * (j + 1) / tnz;
+        const p = addPiece(b, 1, 1, sx0, f * FH - SL, sz0, sx1, f * FH, sz1, f, -1, { ti: i, tj: j }); slabs[f].push(p.id);
+      }
+    }
+    b.slabs = slabs; b.tnx = tnx; b.tnz = tnz;
+    /* iç bölmeler */
+    const parts = [];
+    for (let f = 0; f < F; f++) {
+      const np = ri(1, 2);
+      for (let k = 0; k < np; k++) {
+        const alongX = R() < 0.5, pos = alongX ? rr(z0 + 8, z1 - 8) : rr(x0 + 8, x1 - 8), len = alongX ? iw : id_, nseg = Math.max(2, Math.round(len / 5));
+        for (let q = 0; q < nseg; q++) {
+          if (R() < 0.22) continue;
+          const a0 = (alongX ? x0 : z0) + TW + len * q / nseg, a1 = (alongX ? x0 : z0) + TW + len * (q + 1) / nseg, yb = f * FH, yt = yb + FH - SL;
+          const p = alongX ? addPiece(b, 2, 2, a0, yb, pos - 0.1, a1, yt, pos + 0.1, f, -1) : addPiece(b, 2, 2, pos - 0.1, yb, a0, pos + 0.1, yt, a1, f, -1);
+          p.ground = f === 0; parts.push(p.id);
+        }
+      }
+    }
+    /* destek ilişkileri */
+    const P = city.pieces, ov = (a, c, e) => a.bb[0] < c.bb[3] + e && a.bb[3] > c.bb[0] - e && a.bb[2] < c.bb[5] + e && a.bb[5] > c.bb[2] - e;
+    for (const id of b.ids) {
+      const p = P[id];
+      if (p.kind === 0 && p.f > 0) p.below = b.ids.filter(j => P[j].kind === 0 && P[j].f === p.f - 1 && P[j].bay === p.bay);
+      else if (p.kind === 2 && p.f > 0) p.below = slabs[p.f].filter(j => ov(p, P[j], 0.05));
+      else if (p.kind === 1) p.below = b.ids.filter(j => P[j].kind !== 1 && P[j].f === p.f - 1 && ov(p, P[j], 0.5));
+    }
+    b.ringOfFn = (f, r) => (ringOf[f] && ringOf[f][((r % b.nring) + b.nring) % b.nring]) || [];
+    /* hasar: patlama kraterleri + üst katlarda aşınma */
+    const nb = Math.round(1 + dmg * 6);
+    for (let k = 0; k < nb; k++) {
+      const side = ri(0, 3), t = R(), fl = Math.min(F - 1, Math.floor(Math.pow(R(), 0.7) * F));
+      const px = side === 0 ? x0 + W * t : side === 2 ? x0 + W * t : side === 1 ? x1 : x0, pz = side === 1 || side === 3 ? z0 + D * t : side === 0 ? z0 : z1;
+      blastAt(b, [px + rr(-1, 1), fl * FH + rr(0.8, 2.6), pz + rr(-1, 1)], rr(2.6, 3.6 + dmg * 4.5), 1, true);
+    }
+    for (const id of b.ids) { const p = P[id]; if (!p.alive) continue; const top = p.f >= F - 1; if (top && p.kind === 0 && R() < dmg * 0.55 && p.f === F - 1) removeRaw(p); else if (p.kind === 1 && p.f === F && R() < 0.3 + dmg * 0.6) removeRaw(p); else if (p.kind === 1 && R() < dmg * 0.15) removeRaw(p); else if (p.kind === 0 && p.f > 0 && R() < dmg * 0.08) removeRaw(p); }
+    settleInstant(b);
+    b.alive = b.ids.filter(i => P[i].alive).length;
+    if (opts.groundDmg) for (const id of b.ids) { const p = P[id]; if (p.ground && p.kind === 0 && R() < 0.12) removeRaw(p); }
+    settleInstant(b);
+    return b;
+  }
+  function removeRaw(p) { p.alive = false; }
+  function blastAt(b, pt, r, power, soot) {
+    let n = 0;
+    for (const id of b.ids) {
+      const p = city.pieces[id]; if (!p.alive) continue;
+      const q = p.bb, dx = Math.max(q[0] - pt[0], 0, pt[0] - q[3]), dy = Math.max(q[1] - pt[1], 0, pt[1] - q[4]), dz = Math.max(q[2] - pt[2], 0, pt[2] - q[5]), d = Math.hypot(dx, dy, dz);
+      if (d >= r) { continue; }
+      const pr = Math.pow(1 - d / r, 0.7) * power * (p.kind === 1 ? 0.75 : 1);
+      if (soot && d < r * 1.25) p.soot = Math.max(p.soot, 0.35 + 0.5 * (1 - d / r));
+      if (R() < pr) { if (soot) removeRaw(p); else { p._rm = true; n++; } }
+    }
+    return n;
+  }
+  /* destek hesabı: desteksiz canlı parçaların listesini verir */
+  function unsupported(b) {
+    const P = city.pieces, sup = new Map();
+    const ok = id => P[id].alive && sup.get(id) === true;
+    for (let f = 0; f <= b.F; f++) {
+      if (f >= 1) {
+        /* döşeme f */
+        const tiles = b.slabs[f], good = new Set();
+        for (const id of tiles) { const p = P[id]; if (p.alive && p.below.some(ok)) good.add(id); }
+        let ch = true;
+        while (ch) { ch = false; for (const id of tiles) { if (good.has(id) || !P[id].alive) continue; const p = P[id]; for (const j of tiles) { if (!good.has(j)) continue; const q = P[j]; if (Math.abs(q.ti - p.ti) + Math.abs(q.tj - p.tj) <= 1) { good.add(id); ch = true; break; } } } }
+        for (const id of tiles) sup.set(id, good.has(id));
+      }
+      if (f === b.F) break;
+      const mine = b.ids.filter(i => P[i].alive && P[i].f === f && P[i].kind !== 1);
+      for (const id of mine) { const p = P[id]; sup.set(id, p.ground || (p.kind === 0 ? p.below.some(ok) : p.below.some(ok))); }
+      /* yatay köprüleme (1 komşu) */
+      for (const id of mine) { const p = P[id]; if (sup.get(id) || p.kind !== 0) continue; for (const dr of [-1, 1]) { if (b.ringOfFn(f, p.ring + dr).some(j => P[j].alive && sup.get(j) === true && P[j].kind === 0 && !P[j]._weak)) { sup.set(id, true); p._weak = true; break; } } }
+    }
+    for (const id of b.ids) delete P[id]._weak;
+    return b.ids.filter(i => P[i].alive && sup.get(i) !== true);
+  }
+  function settleInstant(b) { for (let k = 0; k < 12; k++) { const u = unsupported(b); if (!u.length) break; for (const id of u) removeRaw(city.pieces[id]); } }
+
+  /* ---- yerleşim ---- */
+  const PITCH = 80, NBL = 2;
+  const mats = [0, 1, 2];
+  function lotRubble(x, z, w, d, n) { for (let i = 0; i < n; i++) city.rubble.push({ x: x + rr(-w / 2, w / 2), z: z + rr(-d / 2, d / 2), s: rr(0.4, 1.8), c: ri(0, 2) }); }
+  for (let i = -NBL; i <= NBL; i++) for (let j = -NBL; j <= NBL; j++) {
+    const bx = i * PITCH, bz = j * PITCH, dc = Math.hypot(bx, bz), r = R();
+    const FM = Math.max(2, Math.round(2 + 3.2 * (1 - dc / 260) + rr(-0.6, 1.2)));
+    if (r < 0.1 || (i === 0 && j === 0 && false)) { lotRubble(bx, bz, 56, 56, 26); continue; }
+    const style = ri(0, 2), dmgBase = 0.28 + 0.4 * R();
+    if (r < 0.5) {
+      const W = rr(38, 54), D = rr(38, 54); genBuilding(bx + rr(-3, 3), bz + rr(-3, 3), W, D, FM, style, dmgBase + 0.12, { groundDmg: R() < 0.5 });
+    } else if (r < 0.8) {
+      const alongX = R() < 0.5, w2 = rr(22, 27), d2 = rr(40, 54);
+      for (let k = 0; k < 2; k++) { const o = (k ? 1 : -1) * 15; if (alongX) genBuilding(bx + o + rr(-1, 1), bz + rr(-2, 2), w2, d2, Math.max(2, FM + ri(-1, 0)), (style + k) % 3, dmgBase + rr(0, 0.25)); else genBuilding(bx + rr(-2, 2), bz + o + rr(-1, 1), d2, w2, Math.max(2, FM + ri(-1, 0)), (style + k) % 3, dmgBase + rr(0, 0.25)); }
+    } else {
+      for (let a = 0; a < 2; a++) for (let c = 0; c < 2; c++) { if (R() < 0.18) { lotRubble(bx + (a ? 15 : -15), bz + (c ? 15 : -15), 22, 22, 10); continue; } genBuilding(bx + (a ? 16 : -16) + rr(-1, 1), bz + (c ? 16 : -16) + rr(-1, 1), rr(22, 26), rr(22, 26), Math.max(2, FM - ri(0, 1)), ri(0, 2), dmgBase + rr(0, 0.3)); }
+    }
+  }
+  /* çevre: harap alçak evler */
+  for (let k = 0; k < 26; k++) {
+    const ang = R() * 6.283, rad = rr(235, 310), x = Math.cos(ang) * rad, z = Math.sin(ang) * rad;
+    if (Math.max(Math.abs(x), Math.abs(z)) > 312) continue;
+    let ok = true; for (const o of city.buildings) if (Math.abs(o.cx - x) < o.W / 2 + 14 && Math.abs(o.cz - z) < o.D / 2 + 14) { ok = false; break; }
+    if (ok) genBuilding(x, z, rr(11, 17), rr(10, 15), ri(1, 2), ri(0, 2), 0.35 + R() * 0.45, { windows: true });
+  }
+  for (const b of city.buildings) b.alive = b.ids.filter(i => city.pieces[i].alive).length;
+  /* enkaz: yıkılan zemin parçaları ve bina diplerinde */
+  for (const b of city.buildings) {
+    for (const id of b.ids) { const p = city.pieces[id]; if (!p.alive && p.f <= 1 && R() < 0.5) { const q = p.bb; city.rubble.push({ x: (q[0] + q[3]) / 2 + rr(-2, 2), z: (q[2] + q[5]) / 2 + rr(-2, 2), s: rr(0.5, 1.7), c: p.mat }); } }
+  }
+  /* sokak: kraterler, araçlar, bariyerler, lambalar */
+  const streetX = [], NS = 2 * NBL + 2; for (let k = 0; k < NS; k++) streetX.push(-PITCH * NBL - PITCH / 2 + k * PITCH);
+  const onStreet = () => { const horiz = R() < 0.5, a = streetX[ri(0, NS - 1)] + rr(-6, 6), b = rr(-HALF + 30, HALF - 30); return horiz ? [b, a] : [a, b]; };
+  for (let k = 0; k < 14; k++) { const p = onStreet(); if (Math.hypot(p[0] - 40, p[1] - 40) < 18) continue; craters.push({ x: p[0], z: p[1], r: rr(3.5, 7), d: rr(0.9, 2) }); lotRubble(p[0], p[1], 14, 14, 8); }
+  for (let k = 0; k < 26; k++) { const p = onStreet(); city.cars.push({ x: p[0], z: p[1], yaw: R() * 6.283, c: ri(0, 4), burnt: R() < 0.7, flip: R() < 0.12 }); }
+  for (let k = 0; k < 6; k++) { const c = city.cars[k * 3]; if (c) city.smokers.push({ x: c.x, z: c.z, t: R() }); }
+  for (let k = 0; k < 14; k++) { const p = onStreet(), yaw = R() < 0.5 ? 0 : Math.PI / 2; for (let q = -2; q <= 2; q++) city.barriers.push({ x: p[0] + (yaw ? 0 : q * 3.1), z: p[1] + (yaw ? q * 3.1 : 0), yaw }); }
+  for (let k = 0; k < 70; k++) { const p = onStreet(); city.posts.push({ x: p[0] + (R() < 0.5 ? 9 : -9) * (Math.abs(p[0] - streetX.reduce((a, c) => Math.abs(c - p[0]) < Math.abs(a - p[0]) ? c : a)) < 1 ? 1 : 0), z: p[1], lean: rr(-0.4, 0.4), yaw: R() * 6.28 }); }
+  for (let k = 0; k < 160; k++) { const p = onStreet(); lotRubble(p[0], p[1], 10, 10, 1); }
+  for (let k = 0; k < 160; k++) { const ang = R() * 6.28, rad = rr(215, 328); city.rubble.push({ x: Math.cos(ang) * rad, z: Math.sin(ang) * rad, s: rr(0.5, 2), c: ri(0, 2) }); }
+
+  /* ---- çarpışma ızgarası (zemin kat parçaları) ---- */
+  const CELL = 8, GN = Math.ceil(2 * (HALF + 20) / CELL), gcell = new Array(GN * GN);
+  const gi = v => Math.floor((v + HALF + 20) / CELL);
+  for (const p of city.pieces) {
+    if (p.kind === 1 || p.bb[1] > 2.4 || p.bb[4] < 0.6) continue;
+    for (let i = gi(p.bb[0]); i <= gi(p.bb[3]); i++) for (let j = gi(p.bb[2]); j <= gi(p.bb[5]); j++) { if (i < 0 || j < 0 || i >= GN || j >= GN) continue; (gcell[i * GN + j] = gcell[i * GN + j] || []).push(p.id); }
+  }
+  city.obbBlocked = function (x, z, yaw, hl, hw) {
+    const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = fz, rz = -fx, rad = Math.hypot(hl, hw);
+    const ex = Math.abs(fx) * hl + Math.abs(rx) * hw, ez = Math.abs(fz) * hl + Math.abs(rz) * hw;
+    for (let i = gi(x - rad); i <= gi(x + rad); i++) for (let j = gi(z - rad); j <= gi(z + rad); j++) {
+      if (i < 0 || j < 0 || i >= GN || j >= GN) continue; const L = gcell[i * GN + j]; if (!L) continue;
+      for (const id of L) {
+        const p = city.pieces[id]; if (!p.alive) continue; const q = p.bb, cx = (q[0] + q[3]) / 2, cz = (q[2] + q[5]) / 2, hx = (q[3] - q[0]) / 2, hz = (q[5] - q[2]) / 2, dx = cx - x, dz = cz - z;
+        if (Math.abs(dx) > hx + ex || Math.abs(dz) > hz + ez) continue;
+        if (Math.abs(dx * fx + dz * fz) > hl + Math.abs(fx) * hx + Math.abs(fz) * hz) continue;
+        if (Math.abs(dx * rx + dz * rz) > hw + Math.abs(rx) * hx + Math.abs(rz) * hz) continue;
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /* ---- ışın / mermi ---- */
+  function rayBoxT(o, d, q, maxT) {
+    let t0 = 0, t1 = maxT, ax = -1, sg = 0;
+    for (let k = 0; k < 3; k++) {
+      const dk = d[k], ok = o[k];
+      if (Math.abs(dk) < 1e-9) { if (ok < q[k] || ok > q[k + 3]) return null; continue; }
+      let a = (q[k] - ok) / dk, c = (q[k + 3] - ok) / dk, sgn = -1; if (a > c) { const tmp = a; a = c; c = tmp; sgn = 1; }
+      if (a > t0) { t0 = a; ax = k; sg = sgn; } if (c < t1) t1 = c; if (t0 > t1) return null;
+    }
+    return { t: t0, ax, sg };
+  }
+  city.raycast = function (o, d, maxT, skip) {
+    let best = null;
+    for (const b of city.buildings) {
+      if (b.alive <= 0) continue;
+      const bh = rayBoxT(o, d, b.bb, maxT); if (!bh) continue;
+      for (const id of b.ids) {
+        const p = city.pieces[id]; if (!p.alive || (skip && skip.has(id))) continue;
+        const h = rayBoxT(o, d, p.bb, best ? best.t : maxT); if (!h) continue;
+        if (!best || h.t < best.t) best = { t: h.t, id, ax: h.ax, sg: h.sg };
+      }
+    }
+    return best;
+  };
+  city.segHit = function (p0, p1, skip) {
+    const d = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]], L = Math.hypot(d[0], d[1], d[2]); if (L < 1e-6) return null;
+    const u = [d[0] / L, d[1] / L, d[2] / L], h = city.raycast(p0, u, L, skip); if (!h) return null;
+    h.f = h.t / L; h.u = u; h.pt = [p0[0] + u[0] * h.t, p0[1] + u[1] * h.t, p0[2] + u[2] * h.t]; return h;
+  };
+  city.losClear = function (a, b) {
+    const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], L = Math.hypot(d[0], d[1], d[2]); if (L < 1) return true;
+    if (city.raycast(a, [d[0] / L, d[1] / L, d[2] / L], L)) return false;
+    for (let i = 1; i < 28; i++) { const f = i / 28; if (th(a[0] + d[0] * f, a[2] + d[2] * f) > a[1] + d[1] * f + 0.2) return false; }
+    return true;
+  };
+
+  /* ---- yıkım ---- */
+  city.removePiece = function (id, cause, vel) {
+    const p = city.pieces[id]; if (!p.alive) return false;
+    p.alive = false; const b = city.buildings[p.b]; b.alive--; b.dirty = true; if (p.bb[1] < 2.4) city.navDirty = true;
+    city.events.push({ type: 'fall', id, cause, vel: vel || [0, 0, 0] });
+    return true;
+  };
+  city.blast = function (pt, r, power) {
+    let n = 0;
+    for (const b of city.buildings) {
+      if (b.alive <= 0) continue;
+      const q = b.bb; if (pt[0] < q[0] - r || pt[0] > q[3] + r || pt[1] < q[1] - r || pt[1] > q[4] + r || pt[2] < q[2] - r || pt[2] > q[5] + r) continue;
+      for (const id of b.ids) {
+        const p = city.pieces[id]; if (!p.alive) continue; const bb = p.bb;
+        const dx = Math.max(bb[0] - pt[0], 0, pt[0] - bb[3]), dy = Math.max(bb[1] - pt[1], 0, pt[1] - bb[4]), dz = Math.max(bb[2] - pt[2], 0, pt[2] - bb[5]), d = Math.hypot(dx, dy, dz);
+        if (d >= r) continue;
+        const pr = Math.pow(1 - d / r, 0.8) * power * (p.kind === 1 ? 0.8 : 1);
+        if (R() < pr) { const l = Math.max(1, d), cx = (bb[0] + bb[3]) / 2 - pt[0], cy = (bb[1] + bb[4]) / 2 - pt[1], cz = (bb[2] + bb[5]) / 2 - pt[2], ll = Math.hypot(cx, cy, cz) || 1; const k = 14 * (1 - d / r) + 2; if (city.removePiece(id, 'blast', [cx / ll * k, cy / ll * k + 4, cz / ll * k])) n++; }
+        else p.soot = Math.max(p.soot, 0.4 * (1 - d / r));
+      }
+    }
+    return n;
+  };
+  /* mermi çarpması: {end, blastR, pt} */
+  city.impact = function (s, hit) {
+    const p = city.pieces[hit.id], bb = p.bb, th_ = Math.min(bb[3] - bb[0], bb[4] - bb[1], bb[5] - bb[2]), pt = hit.pt;
+    const nrm = [0, 0, 0]; nrm[hit.ax] = -hit.sg;
+    city.events.push({ type: 'hit', pt, n: nrm, shell: s.type, mat: p.mat });
+    if (s.type === 'ap') {
+      s.cp = s.cp || new Set(); s.cp.add(hit.id);
+      const v = Math.hypot(s.v[0], s.v[1], s.v[2]), loss = _cl(0.07 * th_ / 0.4 + 0.015, 0, 0.3), f = 1 - loss;
+      s.v = [s.v[0] * f, s.v[1] * f, s.v[2] * f];
+      if (R() < (p.kind === 1 ? 0.9 : 0.65)) city.removePiece(hit.id, 'punch', [hit.u[0] * 9, hit.u[1] * 9 + 2, hit.u[2] * 9]);
+      s.p = [pt[0] + hit.u[0] * 0.02, pt[1] + hit.u[1] * 0.02, pt[2] + hit.u[2] * 0.02];
+      if (v * f < 300) { s.alive = false; return { end: true, blastR: 0, pt }; }
+      return { end: false, pt };
+    }
+    s.p = pt; s.alive = false;
+    const r = s.type === 'he' ? 9 : 4, pw = s.type === 'he' ? 1.7 : 1.25;
+    city.blast(pt, r, pw);
+    if (s.type === 'heat') city.removePiece(hit.id, 'blast', [hit.u[0] * 12, 5, hit.u[2] * 12]);
+    city.events.push({ type: s.type === 'he' ? 'boom' : 'burst', pt, r });
+    return { end: true, blastR: s.type === 'he' ? 5 : 3, pt };
+  };
+  /* yapısal çöküş: desteği kalmayanlar gecikmeli düşer */
+  city.queue = [];
+  city.update = function (dt) {
+    let n = 0;
+    for (const b of city.buildings) {
+      if (!b.dirty || n >= 2) continue; b.dirty = false; n++;
+      for (const id of unsupported(b)) { const p = city.pieces[id]; if (!p._q) { p._q = true; city.queue.push({ id, t: 0.25 + R() * 0.9 }); } }
+    }
+    for (let i = city.queue.length - 1; i >= 0; i--) {
+      const q = city.queue[i]; q.t -= dt;
+      if (q.t <= 0) { city.queue.splice(i, 1); const p = city.pieces[q.id]; p._q = false; const bb = p.bb; const cx = (bb[0] + bb[3]) / 2 - city.buildings[p.b].cx, cz = (bb[2] + bb[5]) / 2 - city.buildings[p.b].cz, l = Math.hypot(cx, cz) || 1; city.removePiece(q.id, 'collapse', [cx / l * 3 * R(), -1, cz / l * 3 * R()]); }
+    }
+  };
+
+  /* ---- yol bulma ---- */
+  const NC = 5, NG = Math.ceil(2 * HALF / NC), blocked = new Uint8Array(NG * NG);
+  const ni = v => Math.floor((v + HALF) / NC);
+  city.buildNav = function () {
+    blocked.fill(0);
+    for (const p of city.pieces) {
+      if (!p.alive || p.kind === 1 || p.bb[1] > 2.4 || p.bb[4] < 0.7) continue;
+      const infl = 3.0; for (let i = ni(p.bb[0] - infl); i <= ni(p.bb[3] + infl); i++) for (let j = ni(p.bb[2] - infl); j <= ni(p.bb[5] + infl); j++) if (i >= 0 && j >= 0 && i < NG && j < NG) blocked[i * NG + j] = 1;
+    }
+    for (let i = 0; i < NG; i++) for (let j = 0; j < NG; j++) if (i < 2 || j < 2 || i >= NG - 2 || j >= NG - 2) blocked[i * NG + j] = 1;
+    city.navDirty = false;
+  };
+  city.buildNav();
+  const cw = (i, j) => [-HALF + (i + 0.5) * NC, -HALF + (j + 0.5) * NC];
+  city.navFree = (x, z) => { if (city.navDirty) city.buildNav(); const i = ni(x), j = ni(z); return i >= 0 && j >= 0 && i < NG && j < NG && !blocked[i * NG + j]; };
+  function nearestFree(i, j) { for (let r = 0; r < 12; r++) for (let a = -r; a <= r; a++) for (let c = -r; c <= r; c++) { if (Math.max(Math.abs(a), Math.abs(c)) !== r) continue; const x = i + a, y = j + c; if (x >= 0 && y >= 0 && x < NG && y < NG && !blocked[x * NG + y]) return [x, y]; } return null; }
+  const gS = new Float32Array(NG * NG), par = new Int32Array(NG * NG), stamp = new Int32Array(NG * NG); let stampN = 0;
+  city.path = function (from, to) {
+    if (city.navDirty) city.buildNav();
+    const a = nearestFree(_cl(ni(from[0]), 0, NG - 1), _cl(ni(from[1]), 0, NG - 1)), g = nearestFree(_cl(ni(to[0]), 0, NG - 1), _cl(ni(to[1]), 0, NG - 1)); if (!a || !g) return null;
+    stampN++; const heap = [], push = (k, f) => { heap.push([f, k]); let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; const t = heap[p]; heap[p] = heap[i]; heap[i] = t; i = p; } };
+    const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let i = 0; for (;;) { let l = 2 * i + 1, r = l + 1, m = i; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (r < heap.length && heap[r][0] < heap[m][0]) m = r; if (m === i) break; const t = heap[m]; heap[m] = heap[i]; heap[i] = t; i = m; } } return top; };
+    const sk = a[0] * NG + a[1], gk = g[0] * NG + g[1], h = (k) => { const dx = Math.abs((k / NG | 0) - g[0]), dz = Math.abs(k % NG - g[1]); return (dx + dz) + (1.414 - 2) * Math.min(dx, dz); };
+    gS[sk] = 0; par[sk] = -1; stamp[sk] = stampN; push(sk, h(sk)); const closed = new Uint8Array(0); const done = new Set(); let it = 0, found = false;
+    while (heap.length && it++ < 30000) {
+      const [f, k] = pop(); if (done.has(k)) continue; done.add(k); if (k === gk) { found = true; break; }
+      const ci = k / NG | 0, cj = k % NG;
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+        if (!di && !dj) continue; const x = ci + di, y = cj + dj; if (x < 0 || y < 0 || x >= NG || y >= NG) continue; const nk = x * NG + y; if (blocked[nk]) continue;
+        if (di && dj && (blocked[(ci + di) * NG + cj] || blocked[ci * NG + cj + dj])) continue;
+        const ng = gS[k] + (di && dj ? 1.414 : 1); if (stamp[nk] !== stampN || ng < gS[nk]) { stamp[nk] = stampN; gS[nk] = ng; par[nk] = k; push(nk, ng + h(nk)); }
+      }
+    }
+    if (!found) return null;
+    const out = []; for (let k = gk; k !== -1; k = par[k]) out.push(cw(k / NG | 0, k % NG)); out.reverse();
+    /* sadeleştirme: görüş içinde kalan ara noktaları at */
+    const sm = [out[0]]; let last = 0;
+    for (let i = 2; i < out.length; i++) { if (!segFree(out[last], out[i])) { sm.push(out[i - 1]); last = i - 1; } }
+    sm.push(out[out.length - 1]); return sm;
+  };
+  function segFree(a, b) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let d = 0; d <= L; d += NC * 0.5) { const f = L ? d / L : 0, i = ni(a[0] + (b[0] - a[0]) * f), j = ni(a[1] + (b[1] - a[1]) * f); if (blocked[i * NG + j]) return false; } return true; }
+  /* sokakta rastgele boş nokta */
+  city.randomSpot = function (cx, cz, dmin, dmax) {
+    for (let k = 0; k < 400; k++) { const a = R() * 6.283, d = rr(dmin, dmax), x = cx + Math.sin(a) * d, z = cz + Math.cos(a) * d; if (Math.abs(x) < HALF - 20 && Math.abs(z) < HALF - 20 && city.navFree(x, z)) return [x, z]; }
+    return null;
+  };
+  return city;
+}
+if (typeof module !== 'undefined') module.exports = { makeCity };
+/* ======================= 3B oyun: sahne, kontrol, yapay zekâ, arayüz ======================= */
+(function () {
+const $ = id => document.getElementById(id);
+const lerp = (a, b, t) => a + (b - a) * t;
+const view = $('view'), cvs = $('c'), ov = $('ov'), octx = ov.getContext('2d'), rdc = $('rd'), rctx = rdc.getContext('2d');
+let renderer = null;
+try { renderer = new THREE.WebGLRenderer({ canvas: cvs, antialias: true }); } catch (e) { renderer = null; }
+if (!renderer || typeof THREE === 'undefined') { $('hint').innerHTML = '<div>Bu tarayıcı WebGL açamadı, 3B sahne gösterilemiyor.</div>'; return; }
+const DPR = Math.min(window.devicePixelRatio || 1, 2);
+renderer.setPixelRatio(DPR);
+renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const CS = getComputedStyle(document.documentElement), CV = n => (CS.getPropertyValue(n) || '').trim();
+const COL = { amber: CV('--amber') || '#e3a93b', red: CV('--red') || '#da5640', green: CV('--green') || '#86b36a', ink: CV('--ink') || '#dde1d3', mute: CV('--mute') || '#89938a' };
+
+/* ---------- Sahne ---------- */
+const scene = new THREE.Scene();
+const FOG = 0xa9b3ad;
+scene.fog = new THREE.Fog(FOG, 260, 1800);
+const camera = new THREE.PerspectiveCamera(62, 16 / 9, 0.5, 6500);
+scene.add(new THREE.HemisphereLight(0xd3dde6, 0x4b4733, 0.85));
+const sun = new THREE.DirectionalLight(0xfff0d2, 1.0);
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 500 });
+sun.shadow.bias = -0.0006;
+scene.add(sun); scene.add(sun.target);
+/* gökyüzü */
+{
+  const g = new THREE.SphereGeometry(5500, 24, 14), pos = g.attributes.position, cols = [];
+  const hor = new THREE.Color(0xc2cbc5), top = new THREE.Color(0x4d7094), c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) { const y = Math.max(0, pos.getY(i) / 5500); c.copy(hor).lerp(top, Math.pow(y, 0.55)); cols.push(c.r, c.g, c.b); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(cols, 3));
+  var sky = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.BackSide, fog: false, depthWrite: false }));
+  sky.renderOrder = -1; scene.add(sky);
+}
+
+let terrain, city = null, terrainMesh = null, farMesh = null, pieceMesh = null, decor = [], debris = [], GSIZE = 760;
+const hsh = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+function wallMaterial() {
+  const m = new THREE.MeshLambertMaterial({ color: 0xffffff });
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aMat; varying float vMat; varying vec3 vWP; varying vec3 vWN;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\nvMat = aMat; vWP = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz; vWN = normalize(mat3(instanceMatrix) * objectNormal);');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying float vMat; varying vec3 vWP; varying vec3 vWN;
+float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1,0)),f.x),mix(hs(i+vec2(0,1)),hs(i+vec2(1,1)),f.x),f.y);}`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+{ vec3 an=abs(vWN); vec2 uv = an.y>0.7 ? vWP.xz : (an.x>an.z ? vWP.zy : vWP.xy);
+  float n=vn(uv*3.0)*0.45+vn(uv*13.0)*0.35+vn(uv*47.0)*0.2; float pat=1.0;
+  if(vMat<0.5){ float row=floor(uv.y/0.085); float off=mod(row,2.0)*0.125; float bx=(uv.x+off)/0.25; float fx=fract(bx), fy=fract(uv.y/0.085);
+    float mortar=min(step(fx,0.05)+step(fy,0.12),1.0); pat=(0.78+hs(vec2(floor(bx),row))*0.3)*(1.0-0.38*mortar); if(an.y>0.7) pat=0.85; }
+  else if(vMat<1.5){ pat=0.8+0.3*n; float sx=min(step(0.985,fract(uv.x/2.4))+step(0.985,fract(uv.y/1.6)),1.0); pat*=1.0-0.28*sx; }
+  else { pat=0.86+0.25*n; }
+  float grime=0.72+0.28*smoothstep(0.0,2.5,vWP.y);
+  diffuseColor.rgb *= pat*(0.82+0.36*n)*grime; }`);
+  };
+  return m;
+}
+function paintGround() {
+  const W = 2048, cv = document.createElement('canvas'); cv.width = cv.height = W; const g = cv.getContext('2d'), k = W / GSIZE, X = x => (x + GSIZE / 2) * k, Z = z => (z + GSIZE / 2) * k;
+  g.fillStyle = '#5f5a49'; g.fillRect(0, 0, W, W);
+  for (let i = 0; i < 9000; i++) { const v = 70 + Math.random() * 40; g.fillStyle = 'rgba(' + v + ',' + (v - 4) + ',' + (v - 16) + ',.35)'; g.fillRect(Math.random() * W, Math.random() * W, 2 + Math.random() * 7, 2 + Math.random() * 5); }
+  const Hc = 232;
+  g.fillStyle = '#7b7a72'; g.fillRect(X(-Hc), Z(-Hc), 2 * Hc * k, 2 * Hc * k);
+  for (let i = 0; i < 6000; i++) { const v = 95 + Math.random() * 45; g.fillStyle = 'rgba(' + v + ',' + v + ',' + (v - 6) + ',.3)'; g.fillRect(X(-Hc) + Math.random() * 2 * Hc * k, Z(-Hc) + Math.random() * 2 * Hc * k, 2 + Math.random() * 6, 2 + Math.random() * 6); }
+  const sx = []; for (let c = -2; c <= 3; c++) sx.push(-200 + 40 + (c - 1) * 80 + 40 - 40 + 0);
+  const streets = [-200, -120, -40, 40, 120, 200];
+  for (const c of streets) {
+    g.fillStyle = '#8d8c84'; g.fillRect(X(-Hc), Z(c - 11), 2 * Hc * k, 22 * k); g.fillRect(X(c - 11), Z(-Hc), 22 * k, 2 * Hc * k);
+  }
+  for (const c of streets) { g.fillStyle = '#3a3c3e'; g.fillRect(X(-Hc), Z(c - 8), 2 * Hc * k, 16 * k); g.fillRect(X(c - 8), Z(-Hc), 16 * k, 2 * Hc * k); }
+  for (let i = 0; i < 14000; i++) { const v = 40 + Math.random() * 40; g.fillStyle = 'rgba(' + v + ',' + v + ',' + (v + 2) + ',.4)'; const c = streets[(Math.random() * 6) | 0], t = (Math.random() - 0.5) * 2 * Hc, o = (Math.random() - 0.5) * 16; if (Math.random() < 0.5) g.fillRect(X(t), Z(c + o), 2 + Math.random() * 5, 2 + Math.random() * 4); else g.fillRect(X(c + o), Z(t), 2 + Math.random() * 4, 2 + Math.random() * 5); }
+  g.strokeStyle = 'rgba(210,200,150,.55)'; g.lineWidth = 0.35 * k; g.setLineDash([3 * k, 4 * k]);
+  for (const c of streets) { g.beginPath(); g.moveTo(X(-Hc), Z(c)); g.lineTo(X(Hc), Z(c)); g.moveTo(X(c), Z(-Hc)); g.lineTo(X(c), Z(Hc)); g.stroke(); }
+  g.setLineDash([]);
+  g.fillStyle = '#44464a'; for (const c of streets) for (const d of streets) g.fillRect(X(c - 8), Z(d - 8), 16 * k, 16 * k);
+  for (const b of city.buildings) { g.fillStyle = 'rgba(30,26,22,.45)'; g.fillRect(X(b.bb[0] - 3), Z(b.bb[2] - 3), (b.W + 6) * k, (b.D + 6) * k); g.fillStyle = 'rgba(55,50,44,.5)'; g.fillRect(X(b.bb[0]), Z(b.bb[2]), b.W * k, b.D * k); }
+  for (const c of city.craters) { const gr = g.createRadialGradient(X(c.x), Z(c.z), 0, X(c.x), Z(c.z), c.r * 1.7 * k); gr.addColorStop(0, 'rgba(18,16,14,.9)'); gr.addColorStop(0.55, 'rgba(30,26,22,.7)'); gr.addColorStop(1, 'rgba(30,26,22,0)'); g.fillStyle = gr; g.beginPath(); g.arc(X(c.x), Z(c.z), c.r * 1.7 * k, 0, 7); g.fill(); }
+  for (const c of city.cars) { g.fillStyle = 'rgba(20,18,16,.5)'; g.beginPath(); g.ellipse(X(c.x), Z(c.z), 3 * k, 2 * k, c.yaw, 0, 7); g.fill(); }
+  g.strokeStyle = 'rgba(20,20,20,.5)'; g.lineWidth = 1;
+  for (let i = 0; i < 260; i++) { let x = X((Math.random() - 0.5) * 2 * Hc), y = Z((Math.random() - 0.5) * 2 * Hc); g.beginPath(); g.moveTo(x, y); for (let s = 0; s < 6; s++) { x += (Math.random() - 0.5) * 28; y += (Math.random() - 0.5) * 28; g.lineTo(x, y); } g.stroke(); }
+  for (let i = 0; i < 18; i++) { const c = streets[(Math.random() * 6) | 0], t = (Math.random() - 0.5) * 2 * Hc; g.fillStyle = 'rgba(70,85,95,.35)'; g.beginPath(); if (Math.random() < 0.5) g.ellipse(X(t), Z(c + (Math.random() - 0.5) * 8), 18 + Math.random() * 30, 6 + Math.random() * 8, 0, 0, 7); else g.ellipse(X(c + (Math.random() - 0.5) * 8), Z(t), 6 + Math.random() * 8, 18 + Math.random() * 30, 0, 0, 7); g.fill(); }
+  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4; return tex;
+}
+function groundMaterial(tex) {
+  const m = new THREE.MeshLambertMaterial({ map: tex });
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vWP;').replace('#include <project_vertex>', '#include <project_vertex>\nvWP = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+varying vec3 vWP;
+float hs(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hs(i),hs(i+vec2(1,0)),f.x),mix(hs(i+vec2(0,1)),hs(i+vec2(1,1)),f.x),f.y);}`)
+      .replace('#include <map_fragment>', `#include <map_fragment>
+{ vec2 p=vWP.xz; float n=vn(p*0.9)*0.4+vn(p*3.7)*0.35+vn(p*13.0)*0.25; diffuseColor.rgb*=0.7+0.6*n; }`);
+  };
+  return m;
+}
+function disposeCity() {
+  for (const o of [terrainMesh, farMesh, pieceMesh, ...decor]) if (o) { scene.remove(o); if (o.geometry) o.geometry.dispose(); }
+  terrainMesh = farMesh = pieceMesh = null; decor = []; debris = [];
+}
+const CTINT = [[0.66, 0.31, 0.22], [0.62, 0.62, 0.6], [0.8, 0.74, 0.6]];
+const PLAS = [[0.8, 0.74, 0.6], [0.66, 0.72, 0.64], [0.74, 0.74, 0.7]];
+function buildTerrain(seed) {
+  disposeCity();
+  city = makeCity(seed); terrain = city.terrain; world_city = city;
+  const SEG = 380, g = new THREE.PlaneGeometry(GSIZE, GSIZE, SEG, SEG); g.rotateX(-Math.PI / 2);
+  const pos = g.attributes.position; for (let i = 0; i < pos.count; i++) pos.setY(i, terrain.h(pos.getX(i), pos.getZ(i)));
+  g.computeVertexNormals();
+  terrainMesh = new THREE.Mesh(g, groundMaterial(paintGround())); terrainMesh.receiveShadow = true; scene.add(terrainMesh);
+  const fg = new THREE.PlaneGeometry(14000, 14000); fg.rotateX(-Math.PI / 2);
+  farMesh = new THREE.Mesh(fg, new THREE.MeshLambertMaterial({ color: 0x5d5a4a })); farMesh.position.y = -0.35; scene.add(farMesh);
+  /* bina parçaları */
+  const alive = city.pieces.filter(p => p.alive), N = alive.length + 40;
+  const geo = new THREE.BoxGeometry(1, 1, 1), am = new Float32Array(N);
+  const pm = new THREE.InstancedMesh(geo, wallMaterial(), N); pm.frustumCulled = false; pm.castShadow = true; pm.receiveShadow = true;
+  const M4 = new THREE.Matrix4(), col = new THREE.Color(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3();
+  alive.forEach((p, i) => {
+    const bb = p.bb, b = city.buildings[p.b]; p.inst = i;
+    sc.set(bb[3] - bb[0], bb[4] - bb[1], bb[5] - bb[2]); ps.set((bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, (bb[2] + bb[5]) / 2);
+    M4.compose(ps, q, sc); pm.setMatrixAt(i, M4);
+    const t = p.kind === 2 ? [0.82, 0.78, 0.68] : p.kind === 1 ? [0.55, 0.55, 0.53] : p.mat === 2 ? PLAS[b.id % 3] : CTINT[p.mat], v = 0.86 + hsh(p.id, 1) * 0.26, dk = 1 - 0.72 * p.soot;
+    col.setRGB(t[0] * v * dk, t[1] * v * dk, t[2] * v * dk); pm.setColorAt(i, col); am[i] = p.kind === 0 ? p.mat : p.kind === 1 ? 1 : 2;
+  });
+  geo.setAttribute('aMat', new THREE.InstancedBufferAttribute(am, 1));
+  pm.count = alive.length + 40; for (let i = alive.length; i < N; i++) { M4.makeScale(0, 0, 0); pm.setMatrixAt(i, M4); }
+  city.freeInst = []; for (let i = alive.length; i < N; i++) city.freeInst.push(i);
+  pm.instanceMatrix.needsUpdate = true; pm.instanceColor.needsUpdate = true; scene.add(pm); pieceMesh = pm;
+  /* enkaz yığınları, araçlar, bariyerler, lambalar */
+  const gy = (x, z) => terrain.h(x, z);
+  const rg = new THREE.IcosahedronGeometry(1, 1), rp = rg.attributes.position;
+  for (let i = 0; i < rp.count; i++) { const k = 0.72 + 0.5 * hsh(Math.round(rp.getX(i) * 40), Math.round(rp.getY(i) * 40) + Math.round(rp.getZ(i) * 40) * 7); rp.setXYZ(i, rp.getX(i) * k, rp.getY(i) * k, rp.getZ(i) * k); }
+  smoothNormals(rg, 1.3);
+  const NR = city.rubble.length * 3, rm = new THREE.InstancedMesh(rg, new THREE.MeshLambertMaterial({ color: 0xffffff }), NR);
+  const RC = [0x8f5a48, 0x86857f, 0xa39a82]; let ri2 = 0;
+  for (const r of city.rubble) for (let k = 0; k < 3; k++) {
+    const s = r.s * rnd(0.3, 0.7), ox = k ? rnd(-1, 1) * r.s : 0, oz = k ? rnd(-1, 1) * r.s : 0;
+    sc.set(s * rnd(0.9, 1.5), s * rnd(0.45, 0.8), s * rnd(0.9, 1.4)); q.setFromEuler(new THREE.Euler(rnd(-0.4, 0.4), rnd(0, 6.28), rnd(-0.4, 0.4)));
+    ps.set(r.x + ox, gy(r.x + ox, r.z + oz) + s * 0.15, r.z + oz); M4.compose(ps, q, sc); rm.setMatrixAt(ri2, M4); rm.setColorAt(ri2, col.setHex(RC[r.c]).multiplyScalar(0.6 + Math.random() * 0.5)); ri2++;
+  }
+  rm.castShadow = true; rm.receiveShadow = true; rm.frustumCulled = false; scene.add(rm); decor.push(rm);
+  const nc = city.cars.length, CC = [0x3b2f2a, 0x2c3234, 0x4a4338, 0x5a2e28, 0x2a2a2a];
+  const cb = new THREE.InstancedMesh(_rbox(1.85, 0.75, 4.3, 0.1), new THREE.MeshLambertMaterial({ color: 0xffffff }), nc), cc = new THREE.InstancedMesh(_rbox(1.6, 0.6, 2.2, 0.1), new THREE.MeshLambertMaterial({ color: 0x1b1b1b }), nc);
+  city.cars.forEach((c, i) => { const y = gy(c.x, c.z); q.setFromEuler(new THREE.Euler(c.flip ? Math.PI : rnd(-0.05, 0.05), c.yaw, rnd(-0.05, 0.05), 'YXZ')); sc.set(1, 1, 1); ps.set(c.x, y + (c.flip ? 1.0 : 0.65), c.z); M4.compose(ps, q, sc); cb.setMatrixAt(i, M4); cb.setColorAt(i, col.setHex(CC[c.c]).multiplyScalar(c.burnt ? 0.45 : 1)); const off = new THREE.Vector3(0, c.flip ? -0.7 : 0.7, -0.2).applyQuaternion(q); ps.set(c.x + off.x, y + (c.flip ? 1.0 : 0.65) + off.y, c.z + off.z); M4.compose(ps, q, sc); cc.setMatrixAt(i, M4); });
+  const cwm = new THREE.InstancedMesh(_cylX(0.34, 0.24, 14), new THREE.MeshLambertMaterial({ color: 0x151515 }), nc * 4); let wi = 0;
+  city.cars.forEach(c => { const y = gy(c.x, c.z); q.setFromEuler(new THREE.Euler(c.flip ? Math.PI : 0, c.yaw, 0, 'YXZ')); sc.set(1, 1, 1); for (const [ox, oz] of [[0.92, 1.4], [-0.92, 1.4], [0.92, -1.4], [-0.92, -1.4]]) { const o = new THREE.Vector3(ox, c.flip ? 1.0 : 0.36, oz).applyQuaternion(q); ps.set(c.x + o.x, y + (c.flip ? 0.4 : 0) + o.y * (c.flip ? 0.4 : 1) , c.z + o.z); M4.compose(ps, q, sc); cwm.setMatrixAt(wi++, M4); } });
+  cwm.castShadow = true; cwm.frustumCulled = false; scene.add(cwm); decor.push(cwm);
+  for (const m of [cb, cc]) { m.castShadow = true; m.frustumCulled = false; scene.add(m); decor.push(m); }
+  const nbar = city.barriers.length, bm = new THREE.InstancedMesh(_rbox(3, 0.9, 0.6, 0.12), new THREE.MeshLambertMaterial({ color: 0x8c8b84 }), nbar);
+  city.barriers.forEach((b, i) => { q.setFromEuler(new THREE.Euler(0, b.yaw, 0)); sc.set(1, 1, 1); ps.set(b.x, gy(b.x, b.z) + 0.45, b.z); M4.compose(ps, q, sc); bm.setMatrixAt(i, M4); });
+  bm.castShadow = true; bm.frustumCulled = false; scene.add(bm); decor.push(bm);
+  const lg = new THREE.CylinderGeometry(0.09, 0.14, 7, 6); lg.translate(0, 3.5, 0); const lm = new THREE.InstancedMesh(lg, new THREE.MeshLambertMaterial({ color: 0x2f3234 }), city.posts.length);
+  city.posts.forEach((p, i) => { q.setFromEuler(new THREE.Euler(p.lean, p.yaw, p.lean * 0.5)); sc.set(1, 1, 1); ps.set(p.x, gy(p.x, p.z), p.z); M4.compose(ps, q, sc); lm.setMatrixAt(i, M4); });
+  lm.frustumCulled = false; scene.add(lm); decor.push(lm);
+}
+let world_city = null;
+function addDebris(p, e) {
+  const bb = p.bb, sx = bb[3] - bb[0], sy = bb[4] - bb[1], sz = bb[5] - bb[2], v = e.vel || [0, 0, 0];
+  debris.push({ i: p.inst, x: (bb[0] + bb[3]) / 2, y: (bb[1] + bb[4]) / 2, z: (bb[2] + bb[5]) / 2, s: [sx, sy, sz], vx: v[0], vy: v[1], vz: v[2], rx: 0, ry: 0, rz: 0, wx: rnd(-1.5, 1.5), wy: rnd(-1, 1), wz: rnd(-1.5, 1.5), landed: false, big: sx * sy * sz > 1.2 });
+  if (debris.length > 520) { const o = debris.shift(); if (!o.landed) o.landed = true; }
+}
+const dM = new THREE.Matrix4(), dQ = new THREE.Quaternion(), dE = new THREE.Euler(), dS = new THREE.Vector3(), dP = new THREE.Vector3();
+function writeDebris(d) { dE.set(d.rx, d.ry, d.rz); dQ.setFromEuler(dE); dS.set(d.s[0], d.s[1], d.s[2]); dP.set(d.x, d.y, d.z); dM.compose(dP, dQ, dS); pieceMesh.setMatrixAt(d.i, dM); }
+let dustBudget = 0;
+function updDebris(dt) {
+  if (!pieceMesh) return;
+  for (const d of debris) {
+    if (d.landed) continue;
+    d.vy -= 9.8 * dt; d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt; d.rx += d.wx * dt; d.ry += d.wy * dt; d.rz += d.wz * dt;
+    const hy = Math.min(d.s[0], d.s[1], d.s[2]) / 2, gh = terrain.h(d.x, d.z) + hy;
+    if (d.y < gh) {
+      d.y = gh; d.vx *= 0.55; d.vz *= 0.55; d.wx *= 0.4; d.wy *= 0.4; d.wz *= 0.4;
+      if (d.vy < -2.5 && dustBudget > 0 && d.big) { dustBudget--; fx('dust', [d.x, gh, d.z], Math.min(2.5, d.s[0] * d.s[1] * d.s[2] / 2 + 0.6)); }
+      d.vy = -d.vy * 0.2;
+      if (Math.abs(d.vy) < 1.0) {
+        d.landed = true; d.vx = d.vz = d.vy = 0; d.rx = 0; d.rz = 0; const m = Math.min(d.s[0], d.s[1], d.s[2]);
+        if (d.s[1] === m) { } else if (d.s[0] === m) d.rz = Math.PI / 2 * (Math.random() < 0.5 ? 1 : -1); else d.rx = Math.PI / 2;
+        d.y = terrain.h(d.x, d.z) + m / 2;
+      }
+    }
+    writeDebris(d);
+  }
+  for (let i = debris.length - 1; i >= 0; i--) if (debris[i].landed && debris[i]._w) debris.splice(i, 1); else if (debris[i].landed) { writeDebris(debris[i]); debris[i]._w = true; }
+  pieceMesh.instanceMatrix.needsUpdate = true;
+}
+function hideInst(i) { dM.makeScale(0, 0, 0); pieceMesh.setMatrixAt(i, dM); }
+function processCityEvents() {
+  if (!city || !pieceMesh) return;
+  const ev = city.events.splice(0); dustBudget = 6; let nf = 0, nh = 0;
+  const cx = camera.position.x, cz = camera.position.z;
+  for (const e of ev) {
+    if (e.type === 'fall') {
+      const p = city.pieces[e.id]; if (p.inst === undefined) continue; const bb = p.bb;
+      if (e.cause === 'punch' || nf++ > 160) { hideInst(p.inst); if (e.cause === 'punch') fx('chunk', [(bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, (bb[2] + bb[5]) / 2], p.mat); }
+      else addDebris(p, e);
+    } else if (e.type === 'hit') {
+      if (nh++ > 6) continue;
+      fx('chunk', e.pt, e.mat); if (e.shell === 'ap') fx('spark', e.pt, 0.6);
+    } else if (e.type === 'boom' || e.type === 'burst') {
+      const sk = shake, far = Math.hypot(e.pt[0] - cx, e.pt[2] - cz) > 110; fx(e.type, e.pt, e.type === 'boom' ? 1 : 0.8); fx('dust', e.pt, 2.5); if (far) shake = sk;
+    }
+  }
+}
+function citySmoke(dt) {
+  if (!city) return;
+  for (const s of city.smokers) {
+    s.t -= dt; if (s.t > 0) continue; s.t = 0.5;
+    if (Math.hypot(s.x - camera.position.x, s.z - camera.position.z) > 380) continue;
+    emit([s.x + rnd(-0.5, 0.5), terrain.h(s.x, s.z) + 1.4, s.z + rnd(-0.5, 0.5)], [rnd(-0.4, 0.4) + 0.8, rnd(2.5, 4), rnd(-0.4, 0.4)], rnd(5, 8), rnd(1.5, 2.5), 0x2a2a28, 1.2, 0, false, 0.5);
+  }
+}
+
+/* ---------- Tank modeli ---------- */
+const tankViews = new Map();
+function buildTank(t, isPlayer) {
+  const M = makeMats(t.key), list = Object.values(M), baseCols = list.map(m => m.color.clone());
+  const root = new THREE.Group(); root.matrixAutoUpdate = false;
+  const tur = new THREE.Group(); tur.position.set(0, RING.y, RING.z); root.add(tur);
+  const gun = new THREE.Group(); gun.position.set(PIVOT[0], PIVOT[1], PIVOT[2]); tur.add(gun);
+  const grp = { hull: root, turret: tur, gun };
+  buildVisual(t, M, grp, t.key);
+  /* fizik zırh kutuları: ERA her zaman görünür, düz plakalar yalnızca röntgende */
+  const armorMat = new THREE.MeshBasicMaterial({ color: 0x6fa8c0, transparent: true, opacity: 0.22, depthWrite: false });
+  const edgeMat = new THREE.LineBasicMaterial({ color: 0xa6d6e6, transparent: true, opacity: 0.75 });
+  const ik = 1 / (t.P.sc || 1);
+  for (const v of t.vols) {
+    if (v.kind === 'barrel') continue;
+    const geo = new THREE.BoxGeometry(v.s[0] * ik, v.s[1] * ik, v.s[2] * ik);
+    if (v.kind === 'era') {
+      const g = new THREE.Group(); g.position.set(v.c[0] * ik, v.c[1] * ik, v.c[2] * ik); g.rotation.set(v.rx, v.ry, 0, 'YXZ');
+      const o = new THREE.Mesh(geo, M.era); o.castShadow = true; g.add(o);
+      const ax = v.s[0] <= v.s[1] && v.s[0] <= v.s[2] ? 0 : v.s[1] <= v.s[2] ? 1 : 2, d = v.s.map((x, i) => (i === ax ? x + 0.03 : x * 0.78) * ik);
+      const inn = new THREE.Mesh(new THREE.BoxGeometry(d[0], d[1], d[2]), M.eraIn); g.add(inn);
+      grp[v.parent].add(g); v.mesh = g; continue;
+    }
+    const m = new THREE.Mesh(geo, armorMat); m.position.set(v.c[0] * ik, v.c[1] * ik, v.c[2] * ik); m.rotation.set(v.rx, v.ry, 0, 'YXZ'); m.visible = false; m.renderOrder = 8;
+    m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat));
+    grp[v.parent].add(m); v.mesh = m;
+  }
+  /* röntgen modül kutuları */
+  for (const m of t.mods) {
+    const mm = new THREE.Mesh(new THREE.BoxGeometry(m.s[0] * ik, m.s[1] * ik, m.s[2] * ik), new THREE.MeshBasicMaterial({ color: 0x86b36a, transparent: true, opacity: 0.55, depthTest: false }));
+    mm.position.set(m.c[0] * ik, m.c[1] * ik, m.c[2] * ik); mm.visible = false; mm.renderOrder = 10; grp[m.parent].add(mm); m.mesh = mm;
+  }
+  scene.add(root);
+  const tv = { root, tur, gun, mats: list, baseCols, deadLook: false };
+  tankViews.set(t, tv); applyXray(t);
+  return tv;
+}
+function disposeTank(t) {
+  const tv = tankViews.get(t); if (!tv) return;
+  scene.remove(tv.root); if (t.debris && t.debris.obj) scene.remove(t.debris.obj);
+  tv.root.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+  tankViews.delete(t);
+}
+let xray = false;
+function applyXray(t) {
+  const tv = tankViews.get(t); if (!tv) return;
+  for (const m of tv.mats) { m.transparent = xray; m.opacity = xray ? 0.14 : 1; m.depthWrite = !xray; m.needsUpdate = true; }
+  for (const m of t.mods) if (m.mesh) m.mesh.visible = xray;
+  for (const v of t.vols) if (v.mesh && v.kind !== 'era' && !(t.turretGone && v.parent !== 'hull')) v.mesh.visible = xray;
+}
+function modColor(m) { return m.state === 'dead' ? 0xda5640 : m.state === 'hurt' ? 0xe3a93b : (m.kind === 'ammo' ? 0xff7a3d : 0x86b36a); }
+const kM = new THREE.Matrix4(), kQ = new THREE.Matrix4(), kR = new THREE.Matrix4(), kT = new THREE.Matrix4();
+function syncTank(t) {
+  const tv = tankViews.get(t); if (!tv) return;
+  refresh(t);
+  const R = t.R, p = t.pos;
+  const sc = t.P.sc || 1;
+  tv.root.matrix.set(R[0] * sc, R[1] * sc, R[2] * sc, p[0], R[3] * sc, R[4] * sc, R[5] * sc, p[1], R[6] * sc, R[7] * sc, R[8] * sc, p[2], 0, 0, 0, 1);
+  if (Math.abs(t.kp) + Math.abs(t.kr) + t.kb > 1e-4) { kM.makeTranslation(0, 1, 0).multiply(kQ.makeRotationX(-t.kp)).multiply(kR.makeRotationZ(t.kr)).multiply(kT.makeTranslation(0, -1, -t.kb * 0.6)); tv.root.matrix.multiply(kM); }
+  tv.root.matrixWorldNeedsUpdate = true;
+  tv.tur.rotation.y = t.turYaw; tv.gun.rotation.x = -t.elev; tv.gun.position.z = PIVOT[2] - t.recoil * 0.5;
+  if (t.dead && !tv.deadLook) { tv.deadLook = true; tv.mats.forEach((m, i) => m.color.copy(tv.baseCols[i]).multiplyScalar(0.28)); }
+  if (t.debris && t.debris.pending) {
+    tv.root.updateMatrixWorld(true); scene.attach(tv.tur);
+    t.debris = { obj: tv.tur, vel: t.debris.vel, spin: t.debris.spin, landed: false };
+  }
+  if (xray) for (const m of t.mods) if (m.mesh) m.mesh.material.color.setHex(modColor(m));
+}
+
+/* ---------- Parçacıklar ---------- */
+const glowTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'); const r = g.createRadialGradient(32, 32, 0, 32, 32, 32); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.35, 'rgba(255,255,255,.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+const PN = 700, pool = [];
+for (let i = 0; i < PN; i++) {
+  const mat = new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false });
+  const sp = new THREE.Sprite(mat); sp.visible = false; scene.add(sp);
+  pool.push({ sp, mat, life: 0, max: 1, vel: [0, 0, 0], grow: 0, grav: 0, a: 1 });
+}
+let pi = 0;
+function emit(p, v, life, size, color, grow, grav, add, alpha) {
+  if (sightOn) { const dx = p[0] - camera.position.x, dy = p[1] - camera.position.y, dz = p[2] - camera.position.z; if (dx * dx + dy * dy + dz * dz < 144) return; }
+  const q = pool[pi]; pi = (pi + 1) % PN;
+  q.life = q.max = life; q.vel = v; q.grow = grow || 0; q.grav = grav || 0; q.a = alpha === undefined ? 1 : alpha;
+  q.mat.color.setHex(color); q.mat.blending = add ? THREE.AdditiveBlending : THREE.NormalBlending; q.mat.opacity = q.a;
+  q.sp.position.set(p[0], p[1], p[2]); q.sp.scale.set(size, size, 1); q.sp.visible = true;
+}
+function updParts(dt) {
+  for (const q of pool) {
+    if (q.life <= 0) continue;
+    q.life -= dt; if (q.life <= 0) { q.sp.visible = false; continue; }
+    q.sp.position.x += q.vel[0] * dt; q.sp.position.y += q.vel[1] * dt; q.sp.position.z += q.vel[2] * dt; q.vel[1] += q.grav * dt;
+    const s = q.sp.scale.x + q.grow * dt; q.sp.scale.set(s, s, 1);
+    const dx = q.sp.position.x - camera.position.x, dy = q.sp.position.y - camera.position.y, dz = q.sp.position.z - camera.position.z, dc = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    q.mat.opacity = q.a * Math.min(1, q.life / q.max * 1.6) * (dc < 16 ? (dc / 16) * (dc / 16) : 1);
+  }
+}
+const R3 = s => [rnd(-s, s), rnd(-s * 0.4, s), rnd(-s, s)];
+let shake = 0, ck = 0;
+function fx(kind, p, n) {
+  n = n || 1;
+  if (kind === 'spark') for (let i = 0; i < 8 * n; i++) emit(p, R3(14), rnd(0.2, 0.55), rnd(0.25, 0.5), 0xffd27a, 0, -9.8, true);
+  else if (kind === 'burst') {
+    emit(p, [0, 0, 0], 0.18, 5 * n, 0xffe9b0, 0, 0, true);
+    for (let i = 0; i < 12 * n; i++) emit(p, R3(8), rnd(0.3, 0.9), rnd(0.8, 1.8), 0xf08a3c, 2, 3, true);
+    for (let i = 0; i < 5; i++) emit(p, [rnd(-2, 2), rnd(1, 4), rnd(-2, 2)], rnd(1, 2.2), rnd(2, 3.5), 0x3a3a38, 2.2, 0, false, 0.7);
+    shake += 0.12;
+  } else if (kind === 'boom') {
+    emit(p, [0, 0, 0], 0.4, 14 * n, 0xfff1c8, 6, 0, true);
+    for (let i = 0; i < 46; i++) emit(p, [rnd(-14, 14), rnd(-2, 20), rnd(-14, 14)], rnd(0.6, 1.8), rnd(2, 5), i % 3 ? 0xe9742f : 0xf6b04a, 3, 2, true);
+    for (let i = 0; i < 26; i++) emit(p, [rnd(-4, 4), rnd(3, 10), rnd(-4, 4)], rnd(2.5, 5.5), rnd(4, 7), 0x2c2c2a, 3, 0, false, 0.75);
+    shake += 0.9;
+  } else if (kind === 'dirt') {
+    for (let i = 0; i < 10 * n; i++) emit(p, [rnd(-6, 6), rnd(3, 13), rnd(-6, 6)], rnd(0.5, 1.2), rnd(0.5, 1.1), 0x6f6247, 0, -9.8, false);
+    for (let i = 0; i < 4; i++) emit(p, [rnd(-1, 1), rnd(1, 3), rnd(-1, 1)], rnd(1.2, 2.2), rnd(3, 5), 0x7a796c, 3, 0, false, 0.5);
+  } else if (kind === 'dust') {
+    for (let i = 0; i < 7 * n; i++) emit([p[0] + rnd(-1, 1), p[1] + rnd(0, 1.5), p[2] + rnd(-1, 1)], [rnd(-3, 3), rnd(0.5, 3.5), rnd(-3, 3)], rnd(2, 4.5), rnd(2.5, 5), 0x9d9484, 3.2, 0, false, 0.5);
+  } else if (kind === 'chunk') {
+    const cc = [0x9a5a45, 0x8d8d88, 0xb8aa8c][n | 0] || 0x8d8d88;
+    for (let i = 0; i < 9; i++) emit(p, [rnd(-6, 6), rnd(1, 8), rnd(-6, 6)], rnd(0.4, 1.0), rnd(0.2, 0.5), cc, 0, -9.8, false);
+    for (let i = 0; i < 3; i++) emit(p, [rnd(-1, 1), rnd(0.5, 2), rnd(-1, 1)], rnd(1.2, 2.4), rnd(1.5, 3), 0xa89f8e, 2.5, 0, false, 0.45);
+  } else if (kind === 'muzzle') {
+    const d = n === 1 ? [0, 0, 1] : n;
+    emit(p, [0, 0, 0], 0.1, 5, 0xfff0bd, 0, 0, true);
+    for (let i = 0; i < (sightOn ? 4 : 12); i++) emit([p[0] + d[0] * 1.5, p[1] + d[1] * 1.5, p[2] + d[2] * 1.5], [d[0] * rnd(8, 24) + rnd(-3, 3), d[1] * rnd(8, 24) + rnd(-2, 3), d[2] * rnd(8, 24) + rnd(-3, 3)], rnd(0.5, 1.4), rnd(1.5, 3), 0x8e8e86, 2.5, 0, false, sightOn ? 0.18 : 0.6);
+    shake += sightOn ? 0.08 : 0.25;
+    const gh = terrain.h(p[0] + d[0] * 6, p[2] + d[2] * 6);
+    if (p[1] - gh < 9) for (let i = 0; i < 14; i++) { const a = Math.random() * 6.28, sp = rnd(4, 13); emit([p[0] + d[0] * 5, gh + 0.4, p[2] + d[2] * 5], [Math.cos(a) * sp + d[0] * 4, rnd(0.3, 1.6), Math.sin(a) * sp + d[2] * 4], rnd(0.8, 1.8), rnd(1.6, 3), 0x8a8068, 3, 0, false, 0.4); }
+  }
+}
+
+/* ---------- Mermi ve vuruş görselleri ---------- */
+const shellViews = new Map(), hitViz = [];
+function shellView(s) {
+  let v = shellViews.get(s); if (v) return v;
+  const col = SHELL[s.type].color;
+  const head = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: col, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false })); head.scale.set(2.2, 2.2, 1); scene.add(head);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(60 * 3), 3));
+  const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: col, transparent: true, opacity: 0.9, fog: false })); line.frustumCulled = false; scene.add(line);
+  v = { head, line, pts: [], dead: 0 }; shellViews.set(s, v); return v;
+}
+function updShellViews(dt) {
+  for (const s of world.shells) {
+    const v = shellView(s);
+    if (s.alive) {
+      v.pts.push(s.p.slice()); if (v.pts.length > 60) v.pts.shift();
+      v.head.position.set(s.p[0], s.p[1], s.p[2]);
+    } else v.dead += dt;
+    const arr = v.line.geometry.attributes.position.array, n = v.pts.length;
+    for (let i = 0; i < 60; i++) { const p = v.pts[Math.min(i, n - 1)] || [0, -999, 0]; arr[i * 3] = p[0]; arr[i * 3 + 1] = p[1]; arr[i * 3 + 2] = p[2]; }
+    v.line.geometry.attributes.position.needsUpdate = true; v.line.geometry.setDrawRange(0, n);
+    v.head.visible = s.alive; v.line.material.opacity = s.alive ? 0.9 : Math.max(0, 0.9 - v.dead * 1.4);
+  }
+  for (const [s, v] of shellViews) if (!world.shells.includes(s)) { scene.remove(v.head); scene.remove(v.line); v.line.geometry.dispose(); shellViews.delete(s); }
+}
+function lineViz(pts, color, opacity) {
+  if (pts.length < 2) return null;
+  const geo = new THREE.BufferGeometry().setFromPoints(pts.map(p => new THREE.Vector3(p[0], p[1], p[2])));
+  const l = new THREE.Line(geo, new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthTest: false, fog: false })); l.userData.o = opacity; l.renderOrder = 20; l.frustumCulled = false; scene.add(l); return l;
+}
+function addHitViz(rep) {
+  const parts = [];
+  const a = lineViz(rep.path, 0xffd24a, 1); if (a) parts.push(a);
+  for (const f of rep.frags) { const l = lineViz([f.a, f.b], f.hit ? 0xff5a4a : 0xff9a8a, f.hit ? 0.9 : 0.35); if (l) parts.push(l); }
+  hitViz.push({ parts, age: 0 });
+  if (hitViz.length > 6) { const o = hitViz.shift(); o.parts.forEach(l => { scene.remove(l); l.geometry.dispose(); }); }
+}
+function updHitViz(dt) {
+  for (let i = hitViz.length - 1; i >= 0; i--) {
+    const h = hitViz[i]; h.age += dt;
+    const k = Math.max(0, 1 - Math.max(0, h.age - 9) / 3);
+    h.parts.forEach(l => { l.material.opacity = k * l.userData.o; });
+    if (h.age > 12) { h.parts.forEach(l => { scene.remove(l); l.geometry.dispose(); }); hitViz.splice(i, 1); }
+  }
+}
+
+/* ---------- Oyun durumu ---------- */
+const STEP = 1 / 120;
+let world, player, enemies = [], over = false, endT = 0, result = '', wave = 1, nextWaveT = 0, kills = 0, diff = 1;
+let playerKey = 't90', enemyKey = 'mix';
+let timeScale = 1, slowT = 0, acc = 0, logList = [], feed = [], logDirty = true, flashT = 0, started = false, locked = false, sightOn = false, selTarget = null;
+const stats = { shots: 0, hits: 0, pens: 0, rico: 0 };
+const cam = { yaw: 0, pitch: 0.06, dist: 15, fov: 62 };
+const input = { fwd: false, back: false, left: false, right: false, fire: false, mx: 0, my: 0, inside: false };
+let aimInfo = { point: [0, 0, 100], dist: 100, target: null };
+
+function addFeed(msg) { feed.push({ msg, t: 6 }); if (feed.length > 5) feed.shift(); }
+function onReport(rep, t, s) {
+  logList.unshift(rep); if (logList.length > 8) logList.pop(); logDirty = true; addHitViz(rep);
+  if (t === player) { flashT = 1; shake += 0.6; slowT = 0.9; }
+  else if (s.owner === player) { slowT = 0.9; }
+}
+function onShellEnd(s, t) {
+  const rep = s.rep; if (!rep || rep.done) return; rep.done = true; logDirty = true;
+  if (s.owner === player && rep.tank !== player) {
+    stats.hits++; if (/deldi|Delip|içeride patladı/i.test(rep.outcome) && !/Delemedi/.test(rep.outcome)) stats.pens++; if (s.ricoed) stats.rico++;
+  }
+  for (const d of rep.dmg.slice(0, 3)) addFeed(rep.tank.name + ': ' + d);
+}
+const nameOf = (k, e) => SPECS[k].name + (e ? ' (düşman)' : ' (siz)');
+
+function clearWorld() {
+  for (const t of Array.from(tankViews.keys())) disposeTank(t);
+  for (const [s, v] of shellViews) { scene.remove(v.head); scene.remove(v.line); }
+  shellViews.clear();
+  hitViz.forEach(h => h.parts.forEach(l => scene.remove(l))); hitViz.length = 0;
+  for (const q of pool) { q.life = 0; q.sp.visible = false; }
+}
+function newGame() {
+  clearWorld();
+  buildTerrain((Math.random() * 1e9) | 0);
+  const gy = Math.floor(Math.random() * 4) * Math.PI / 2;
+  player = makeTank(playerKey, 40, 40, gy, terrain); player.isPlayer = true; player.name = nameOf(playerKey, false);
+  world = { tanks: [player], shells: [], terrain, city, reports: [], repId: 0, fx, log: addFeed, onReport, onShellEnd };
+  buildTank(player, true); player.reloadT = 1.5;
+  enemies = []; over = false; endT = 0; result = ''; wave = 1; kills = 0; nextWaveT = 0; acc = 0; timeScale = 1; slowT = 0;
+  logList = []; feed = []; logDirty = true; shake = 0; flashT = 0; selTarget = null;
+  stats.shots = stats.hits = stats.pens = stats.rico = 0;
+  cam.yaw = gy; cam.pitch = 0.06; sightOn = false; sightLatch = false; shiftDown = false;
+  player.turYaw = 0; player.elev = 0;
+  spawnWave();
+  $('banner').classList.remove('on'); $('stPn').textContent = player.name; chipCache.p = chipCache.e = chipCache.f = null;
+}
+function spawnWave() {
+  const n = Math.min(1 + wave, 4), kinds = TANK_KEYS;
+  for (let i = 0; i < n; i++) {
+    const key = enemyKey === 'mix' ? kinds[(Math.random() * kinds.length) | 0] : enemyKey;
+    const sp = city.randomSpot(player.pos[0], player.pos[2], 150 + i * 15, 300) || city.randomSpot(player.pos[0], player.pos[2], 60, 300) || [-40, -40];
+    const x = sp[0], z = sp[1];
+    const t = makeTank(key, x, z, Math.atan2(player.pos[0] - x, player.pos[2] - z), terrain);
+    t.name = nameOf(key, true); t.isEnemy = true; t.ammo = { ap: 999, heat: 999, he: 999 }; t.reloadT = rnd(3, 6); t.repairCd = rnd(50, 110);
+    t.turYaw = 0; t.ai = { vis: false, visT: 0, planT: Math.random() * 0.1, errYaw: 0, errPit: 0, sel: 'ap', zone: 0, react: 0, want: rnd(110, 250), path: null, pi: 0, pathT: Math.random(), stuck: 0, lx: x, lz: z, rev: 0, moveT: 0, mv: 0, aimYaw: 0, aimPit: 0 };
+    newCycle(t);
+    world.tanks.push(t); enemies.push(t); buildTank(t, false); applyXray(t);
+  }
+  addFeed('Dalga ' + wave + ': ' + n + ' düşman tankı');
+}
+function newCycle(t) {
+  const a = t.ai, r = Math.random();
+  a.sel = r < 0.62 ? 'ap' : r < 0.9 ? 'heat' : 'he'; a.zone = (Math.random() * 3) | 0;
+  const sg = [0.0075, 0.0045, 0.0024][diff];
+  a.errYaw = gauss() * sg; a.errPit = gauss() * sg * 0.8; a.react = [1.4, 0.9, 0.4][diff] * rnd(0.6, 1.4); t.sel = a.sel;
+}
+
+/* ---------- Hareket ---------- */
+function driveTank(t, dt, thr, steer) {
+  let target = 0, dyaw = 0;
+  if (canMove(t)) {
+    const f0 = [Math.sin(t.yaw), 0, Math.cos(t.yaw)];
+    const P = t.P, de = driverEff(t);
+    target = (thr > 0 ? P.vmax : thr < 0 ? -P.vrev : 0) * engineFactor(t) * (0.35 + 0.65 * Math.min(1, de));
+    const g = terrain.normal(t.pos[0], t.pos[2]), slope = -(g[0] * f0[0] + g[2] * f0[2]) / Math.max(0.2, g[1]);
+    if (target > 0) target *= clamp(1 - Math.max(0, slope) * 2.2, 0.25, 1); else if (target < 0) target *= clamp(1 + Math.min(0, slope) * 2.2, 0.25, 1);
+    const massFactor = clamp(Math.sqrt(45 / (P.mass || 45)), 0.76, 1.12);
+    // Ağır tank daha yavaş hızlanır ve yön değiştirir; düşük hızda paletli araç yine de kendi ekseninde dönebilir.
+    dyaw = steer * (0.5 + 0.55 * (1 - Math.min(1, Math.abs(t.speed) / P.vmax))) * (0.5 + 0.5 * Math.min(1, de)) * massFactor * dt * (t.speed < -0.5 ? -1 : 1);
+  }
+  const massFactor = clamp(Math.sqrt(45 / (t.P.mass || 45)), 0.76, 1.12);
+  const a = target === 0 ? 5.6 * massFactor : (Math.abs(target) > Math.abs(t.speed) ? t.P.acc * massFactor : 5.6 * massFactor);
+  t.speed += clamp(target - t.speed, -a * dt, a * dt);
+  if (Math.abs(t.speed) > 0.01 || dyaw !== 0) {
+    const ox = t.pos[0], oz = t.pos[2], oy = t.yaw, ny = oy + dyaw, f = [Math.sin(ny), 0, Math.cos(ny)];
+    const nx = clamp(ox + f[0] * t.speed * dt, -318, 318), nz = clamp(oz + f[2] * t.speed * dt, -318, 318);
+    const HL = 3.7 * (t.P.sc || 1), HW = (t.P.hw + 0.8) * (t.P.sc || 1);
+    const inside = city.obbBlocked(ox, oz, oy, HL, HW);
+    if (inside || !city.obbBlocked(nx, nz, ny, HL, HW)) { t.pos[0] = nx; t.pos[2] = nz; t.yaw = ny; }
+    else if (!city.obbBlocked(ox, oz, ny, HL, HW)) { t.yaw = ny; t.speed *= 0.6; }
+    else if (!city.obbBlocked(nx, nz, oy, HL, HW)) { t.pos[0] = nx; t.pos[2] = nz; }
+    else { if (Math.abs(t.speed) > 6 && t === player) { shake += 0.3; } t.speed *= 0.25; }
+    updatePose(t, terrain, false);
+    if (!t.dead && Math.abs(t.speed) > 3 && Math.random() < dt * 16) {
+      const bp = vadd(t.pos, mv(t.R, [rnd(-1.5, 1.5), 0.3, -3.2]));
+      emit(bp, [rnd(-1, 1), rnd(0.5, 2), rnd(-1, 1)], rnd(1, 1.8), rnd(2, 3.5), 0x8b805f, 2, 0, false, 0.35);
+    }
+  } else updatePose(t, terrain, false);
+}
+function slewTurret(t, ty, tp, ryaw, rel, dt) {
+  const ep = clamp(tp, t.epsMin, t.epsMax);
+  if (!t.dead) {
+    t.turYaw = wrap(t.turYaw + clamp(wrap(ty - t.turYaw), -ryaw * dt, ryaw * dt));
+    t.elev += clamp(ep - t.elev, -rel * dt, rel * dt);
+  }
+  return { ey: wrap(ty - t.turYaw), ep: ep - t.elev };
+}
+function gunDirToward(t, A, led) {
+  refresh(t);
+  const P = t.pivotW, v = vsub(A, P), D = Math.hypot(v[0], v[2]);
+  if (D < 15) return vnorm(v);
+  const a = solveElev(D, v[1], led || t.sel, gunStat(t.P, led || t.sel).v0);
+  return [v[0] / D * Math.cos(a), Math.sin(a), v[2] / D * Math.cos(a)];
+}
+
+/* ---------- Oyuncu ---------- */
+function camDir() { const cp = Math.cos(cam.pitch); return [Math.sin(cam.yaw) * cp, Math.sin(cam.pitch), Math.cos(cam.yaw) * cp]; }
+function camOrigin() {
+  const d = camDir();
+  if (sightOn) { refresh(player); const F = player.F.turret; const k = player.P.sc || 1; return vadd(F[1], mv(F[0], [-0.5 * k, 1.14 * k, 1.3 * k])); }
+  const pv = vadd(player.pos, [0, 3.0, 0]);
+  const o = vsub(pv, vmul(d, cam.dist)); o[1] += 1.0;
+  const gh = terrain.h(o[0], o[2]) + 1.6; if (o[1] < gh) o[1] = gh;
+  const dv = vsub(o, pv), L = vlen(dv);
+  if (L > 1) { const u = vmul(dv, 1 / L), h = city.raycast(pv, u, L); if (h) { const k = Math.max(2.2, h.t - 0.7); return vadd(pv, vmul(u, k)); } }
+  return o;
+}
+function computeAim() {
+  const o = camOrigin(), d = camDir(); let tb = 2600, tgt = null;
+  for (const e of enemies) {
+    const c = vadd(e.pos, [0, 1.5, 0]), oc = vsub(o, c), tc = -vdot(oc, d);
+    if (tc < 5 || tc > tb) continue;
+    const closest = vlen(vadd(oc, vmul(d, tc))), tol = 3.6 + tc * 0.0035;
+    if (closest < tol) { tb = tc; tgt = e; }
+  }
+  let prev = 5;
+  for (let tt = 8; tt < tb; tt += Math.max(4, tt * 0.012)) {
+    const x = o[0] + d[0] * tt, y = o[1] + d[1] * tt, z = o[2] + d[2] * tt;
+    if (y < terrain.h(x, z)) { let lo = prev, hi = tt; for (let i = 0; i < 12; i++) { const m = (lo + hi) / 2; if (o[1] + d[1] * m < terrain.h(o[0] + d[0] * m, o[2] + d[2] * m)) hi = m; else lo = m; } tb = lo; tgt = null; break; }
+    prev = tt;
+  }
+  { const ch = city.raycast(o, d, tb); if (ch) { tb = ch.t; tgt = null; } }
+  aimInfo = { point: vadd(o, vmul(d, tb)), dist: tb, target: tgt, origin: o, dir: d };
+}
+function stepPlayer(dt) {
+  const p = player; if (p.dead) { driveTank(p, dt, 0, 0); return; }
+  const thr = (input.fwd ? 1 : 0) - (input.back ? 1 : 0), st = (input.left ? 1 : 0) - (input.right ? 1 : 0);
+  if (p.repair && (thr || st || input.fire) && started) { p.repair = null; addFeed('Tamir iptal edildi'); }
+  driveTank(p, dt, thr, st);
+  const dir = gunDirToward(p, aimInfo.point);
+  const ang = aimAnglesFor(p, dir);
+  const ge = gunnerEff(p), sl = 0.35 + 0.65 * ge;
+  p.aimErr = slewTurret(p, ang.yaw, ang.pitch, 42 * DEG * sl, 16 * DEG * sl, dt);
+  if (input.fire && started && canFire(p) && p.reloadT <= 0 && p.ammo[p.sel] > 0 && !over) {
+    p.ammo[p.sel]--; stats.shots++;
+    const moving = Math.abs(p.aimErr.ey) + Math.abs(p.aimErr.ep);
+    fireGun(p, world, (0.0005 + Math.abs(p.speed) * 0.00018 + moving * 0.02 + (p.optOK ? 0 : 0.004)) * (1 + (1 - ge) * 3));
+    shake += 0.5; ck = 1;
+  }
+}
+
+/* ---------- Düşman yapay zekâsı ---------- */
+function losClear(a, b) { return city.losClear(a, b); }
+function stepEnemy(e, dt) {
+  const a = e.ai; if (e.dead) { driveTank(e, dt, 0, 0); return; }
+  if (player.dead) { driveTank(e, dt, 0, 0); return; }
+  const dx = player.pos[0] - e.pos[0], dz = player.pos[2] - e.pos[2], dist = Math.hypot(dx, dz), bearing = Math.atan2(dx, dz);
+  a.visT -= dt; refresh(e);
+  if (a.visT <= 0) { a.visT = 0.25; a.vis = losClear(e.pivotW, vadd(player.pos, [0, 1.6, 0])); }
+  if (!e.repair && canRepair(e) && needsRepair(e) && (!a.vis || dist > 220)) startRepair(e, world);
+  /* hareket: yol bulma ile sokak sokak ilerle */
+  const hold = a.vis && dist < a.want && dist > 45;
+  let thr = 0, steer = 0;
+  a.stuck += dt; if (a.stuck > 2.5) { if (Math.hypot(e.pos[0] - a.lx, e.pos[2] - a.lz) < 1.2 && !hold) { a.rev = 1.6; a.pathT = 0; a.rs = Math.random() < 0.5 ? -1 : 1; } a.stuck = 0; a.lx = e.pos[0]; a.lz = e.pos[2]; }
+  if (a.rev > 0) { a.rev -= dt; thr = -1; steer = a.rs; }
+  else if (!hold) {
+    a.pathT -= dt;
+    if (a.pathT <= 0) { a.pathT = rnd(1.6, 2.6); a.path = city.path([e.pos[0], e.pos[2]], [player.pos[0], player.pos[2]]); a.pi = 0; }
+    let wx = player.pos[0], wz = player.pos[2];
+    if (a.path && a.path.length) {
+      while (a.pi < a.path.length - 1 && Math.hypot(a.path[a.pi][0] - e.pos[0], a.path[a.pi][1] - e.pos[2]) < 8) a.pi++;
+      wx = a.path[a.pi][0]; wz = a.path[a.pi][1];
+    }
+    const yerr = wrap(Math.atan2(wx - e.pos[0], wz - e.pos[2]) - e.yaw); steer = clamp(yerr * 2.5, -1, 1); thr = Math.abs(yerr) < 0.7 ? 1 : 0;
+  } else if (dist < 70 && a.vis) thr = -1;
+  driveTank(e, dt, thr, steer * [0.6, 0.8, 1][diff]);
+  /* nişan */
+  a.planT -= dt;
+  if (a.planT <= 0) {
+    a.planT = 0.1;
+    const ft = dist / gunStat(e.P, a.sel).v0, vel = [Math.sin(player.yaw) * player.speed, 0, Math.cos(player.yaw) * player.speed];
+    const zoff = [1.6, 1.0, 2.0][a.zone];
+    const A = [player.pos[0] + vel[0] * ft, player.pos[1] + zoff, player.pos[2] + vel[2] * ft];
+    const dir = gunDirToward(e, A, a.sel), ang = aimAnglesFor(e, dir);
+    a.aimYaw = ang.yaw + a.errYaw; a.aimPit = ang.pitch + a.errPit;
+  }
+  const egs = 0.35 + 0.65 * gunnerEff(e), er = slewTurret(e, a.aimYaw, a.aimPit, [18, 28, 38][diff] * DEG * egs, 12 * DEG * egs, dt);
+  const ready = canFire(e) && e.reloadT <= 0 && a.vis && Math.abs(e.speed) < 1.6 && !over;
+  if (ready && Math.abs(er.ey) < 0.004 && Math.abs(er.ep) < 0.004) {
+    a.react -= dt;
+    if (a.react <= 0) { e.sel = a.sel; fireGun(e, world, (0.0008 + Math.abs(e.speed) * 0.0003 + (e.optOK ? 0 : 0.004)) * (1 + (1 - gunnerEff(e)) * 3)); newCycle(e); }
+  }
+}
+
+/* ---------- Adım ---------- */
+function stepWorld(dt) {
+  city.update(dt);
+  stepPlayer(dt);
+  for (const e of enemies) stepEnemy(e, dt);
+  for (const t of world.tanks) {
+    tickTank(t, dt, world);
+    if (t.fire && Math.random() < dt * 40) {
+      const c = vadd(t.pos, mv(t.R, [rnd(-0.6, 0.6), 1.7, -2.0]));
+      emit(c, [rnd(-1, 1), rnd(2, 6), rnd(-1, 1)], rnd(0.5, 1.1), rnd(1, 2), 0xf08a3c, 1, 0, true);
+      emit(c, [rnd(-1, 1), rnd(2, 4), rnd(-1, 1)], rnd(2, 4), rnd(2, 4), 0x2b2b29, 2.4, 0, false, 0.6);
+    } else if (t.dead && Math.random() < dt * 6) emit(vadd(t.pos, [0, 2, 0]), [rnd(-0.5, 0.5), rnd(1, 2), rnd(-0.5, 0.5)], rnd(2, 4), rnd(2, 4), 0x323230, 2, 0, false, 0.5);
+    const d = t.debris;
+    if (d && d.obj && !d.landed) {
+      d.vel[1] -= G * dt; const o = d.obj;
+      o.position.x += d.vel[0] * dt; o.position.y += d.vel[1] * dt; o.position.z += d.vel[2] * dt;
+      o.rotation.x += d.spin[0] * dt; o.rotation.y += d.spin[1] * dt; o.rotation.z += d.spin[2] * dt;
+      const gh = terrain.h(o.position.x, o.position.z) + 0.6;
+      if (o.position.y < gh) { o.position.y = gh; d.vel[1] = -d.vel[1] * 0.25; d.vel[0] *= 0.5; d.vel[2] *= 0.5; d.spin = d.spin.map(v => v * 0.4); if (Math.abs(d.vel[1]) < 1) d.landed = true; }
+    }
+  }
+  for (const s of world.shells) { if (s.alive) stepShell(world, s, dt); }
+  world.shells = world.shells.filter(s => s.alive || (s._t = (s._t || 0) + dt) < 0.8);
+  updParts(dt);
+  for (const f of feed) f.t -= dt;
+  if (!over) {
+    if (player.dead) { over = true; endT = 2.2; result = 'lose'; addFeed('Tankınız imha edildi: ' + player.cause); }
+    else {
+      const alive = enemies.filter(e => !e.dead);
+      for (const e of enemies) if (e.dead && !e._counted) { e._counted = true; kills++; addFeed(e.name + ' imha edildi: ' + e.cause); }
+      if (!alive.length) {
+        if (nextWaveT <= 0) nextWaveT = 4.5;
+        nextWaveT -= dt;
+        if (nextWaveT <= 0) {
+          wave++; player.ammo.ap = Math.min(24, player.ammo.ap + 10); player.ammo.heat = Math.min(14, player.ammo.heat + 5); player.ammo.he = Math.min(12, player.ammo.he + 4);
+          for (const t of enemies) disposeTank(t); world.tanks = [player]; enemies = [];
+          spawnWave(); nextWaveT = 0;
+        }
+      }
+    }
+  } else if (endT > 0) { endT -= dt; if (endT <= 0) showBanner(); }
+}
+function showBanner() {
+  $('bnH').textContent = 'Tankınız imha edildi';
+  $('bnP').textContent = player.cause + ' · dalga ' + wave + ', ' + kills + ' tank, ' + stats.shots + ' atış, ' + stats.hits + ' isabet, ' + stats.pens + ' delme, ' + stats.rico + ' sekme';
+  $('bnBtn').textContent = 'Yeniden dene'; $('banner').classList.add('on'); try { if (document.pointerLockElement) document.exitPointerLock(); } catch (e) {}
+}
+
+/* ---------- Kamera ve çizim ---------- */
+let vw = 960, vh = 540;
+function resize() {
+  vw = Math.max(280, view.clientWidth); vh = Math.max(200, view.clientHeight);
+  renderer.setSize(vw, vh, false); camera.aspect = vw / vh; camera.updateProjectionMatrix();
+  ov.width = Math.round(vw * DPR); ov.height = Math.round(vh * DPR);
+  const rw = Math.max(200, rdc.clientWidth || 350); rdc.width = Math.round(rw * DPR); rdc.height = Math.round(rw * 230 / 350 * DPR);
+}
+function updateCamera(dt) {
+  const tf = sightOn ? 11 : 62; cam.fov = lerp(cam.fov, tf, 1 - Math.pow(0.0005, dt));
+  camera.fov = cam.fov; camera.updateProjectionMatrix();
+  const o = camOrigin(), d = camDir();
+  shake *= Math.pow(0.02, dt); ck *= Math.pow(0.004, dt);
+  if (ck > 0.002) { const kk = ck * ck * 0.5 + ck * 0.5; if (sightOn) { d[1] += kk * 0.02; } else { d[1] += kk * 0.035; o[0] -= d[0] * kk * 1.1; o[1] -= d[1] * kk * 1.1; o[2] -= d[2] * kk * 1.1; } const l = Math.hypot(d[0], d[1], d[2]); d[0] /= l; d[1] /= l; d[2] /= l; }
+  const sh = Math.min(1.2, shake) * (sightOn ? 0.05 : 0.25);
+  camera.position.set(o[0] + rnd(-sh, sh), o[1] + rnd(-sh, sh), o[2] + rnd(-sh, sh));
+  camera.lookAt(o[0] + d[0] * 50, o[1] + d[1] * 50, o[2] + d[2] * 50);
+  sky.position.copy(camera.position);
+  sun.target.position.set(player.pos[0], player.pos[1], player.pos[2]);
+  sun.position.set(player.pos[0] + 130, player.pos[1] + 170, player.pos[2] + 90);
+}
+const proj = new THREE.Vector3();
+function toScreen(p) { proj.set(p[0], p[1], p[2]).project(camera); return proj.z < 1 && proj.z > -1 ? [(proj.x * 0.5 + 0.5) * vw, (-proj.y * 0.5 + 0.5) * vh] : null; }
+function drawOverlay() {
+  const g = octx; g.setTransform(DPR, 0, 0, DPR, 0, 0); g.clearRect(0, 0, vw, vh);
+  const cx = vw / 2, cy = vh / 2;
+  if (sightOn) {
+    const r = Math.min(vw, vh) * 0.46, gr = g.createRadialGradient(cx, cy, r * 0.85, cx, cy, r * 1.25); gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.92)');
+    g.fillStyle = gr; g.fillRect(0, 0, vw, vh);
+    g.fillStyle = 'rgba(40,255,120,.05)'; g.fillRect(0, 0, vw, vh);
+    g.strokeStyle = 'rgba(120,255,160,.9)'; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(cx - r, cy); g.lineTo(cx - 14, cy); g.moveTo(cx + 14, cy); g.lineTo(cx + r, cy); g.moveTo(cx, cy - r); g.lineTo(cx, cy - 14); g.moveTo(cx, cy + 14); g.lineTo(cx, cy + r); g.stroke();
+    { const rdy = player.reloadT <= 0; g.textAlign = 'center'; g.font = '13px "IBM Plex Mono",monospace'; g.fillStyle = rdy ? 'rgba(120,255,160,.95)' : 'rgba(255,200,120,.95)'; g.fillText((player.dead ? 'DEVRE DIŞI' : rdy ? 'HAZIR' : 'YÜKLENİYOR ' + player.reloadT.toFixed(1) + ' s') + '  ·  ' + SHELL[player.sel].name + ' ' + player.ammo[player.sel], cx, cy + r * 0.9); g.textAlign = 'left'; }
+    for (let i = 1; i <= 8; i++) { const x = i * r * 0.1; g.beginPath(); g.moveTo(cx + x, cy - 4); g.lineTo(cx + x, cy + 4); g.moveTo(cx - x, cy - 4); g.lineTo(cx - x, cy + 4); g.moveTo(cx - 4, cy + x); g.lineTo(cx + 4, cy + x); g.stroke(); }
+  } else {
+    g.strokeStyle = COL.amber; g.lineWidth = 1.5; g.beginPath(); g.arc(cx, cy, 8, 0, 7); g.moveTo(cx - 20, cy); g.lineTo(cx - 5, cy); g.moveTo(cx + 5, cy); g.lineTo(cx + 20, cy); g.moveTo(cx, cy - 20); g.lineTo(cx, cy - 5); g.moveTo(cx, cy + 5); g.lineTo(cx, cy + 20); g.stroke();
+  }
+  g.font = '11px "IBM Plex Mono",monospace'; g.fillStyle = sightOn ? 'rgba(120,255,160,.95)' : COL.amber; g.textAlign = 'left';
+  g.fillText(Math.round(aimInfo.dist) + ' m', cx + 16, cy - 12);
+  /* namlunun gerçek yönü */
+  if (!player.dead) {
+    refresh(player);
+    const gp = toScreen(vadd(player.muzzle, vmul(player.gunDir, Math.min(aimInfo.dist, 2500))));
+    if (gp) { const ready = player.reloadT <= 0, err = Math.hypot(gp[0] - cx, gp[1] - cy); g.strokeStyle = ready ? (err < 14 ? COL.green : COL.amber) : 'rgba(180,180,170,.6)'; g.lineWidth = 2; g.beginPath(); g.arc(gp[0], gp[1], 5, 0, 7); g.stroke(); }
+  }
+  /* düşman işaretleri */
+  for (const e of enemies) {
+    if (e.dead) continue;
+    const s = toScreen(vadd(e.pos, [0, 4.2, 0])); if (!s) continue;
+    const dist = vlen(vsub(e.pos, player.pos)), sel = aimInfo.target === e;
+    g.strokeStyle = sel ? COL.red : 'rgba(218,86,64,.6)'; g.lineWidth = sel ? 2 : 1.2;
+    g.beginPath(); g.moveTo(s[0], s[1] - 8); g.lineTo(s[0] + 7, s[1]); g.lineTo(s[0], s[1] + 8); g.lineTo(s[0] - 7, s[1]); g.closePath(); g.stroke();
+    g.fillStyle = sel ? COL.red : 'rgba(218,86,64,.8)'; g.textAlign = 'center'; g.fillText(Math.round(dist) + ' m', s[0], s[1] - 13);
+  }
+}
+function drawRadar() {
+  const g = rctx, W = rdc.width / DPR, H = rdc.height / DPR; g.setTransform(DPR, 0, 0, DPR, 0, 0);
+  g.fillStyle = '#0c1012'; g.fillRect(0, 0, W, H);
+  const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.46, range = 420, k = R / range;
+  g.strokeStyle = '#243035'; g.lineWidth = 1;
+  for (const r of [100, 200, 300, 400]) { g.beginPath(); g.arc(cx, cy, r * k, 0, 7); g.stroke(); }
+  g.beginPath(); g.moveTo(cx, cy - R); g.lineTo(cx, cy + R); g.moveTo(cx - R, cy); g.lineTo(cx + R, cy); g.stroke();
+  const a = cam.yaw, ca = Math.cos(a), sa = Math.sin(a);
+  /* dünya -> radar: kamera yönü yukarı. Kamera sağı = (-cos yaw, 0, sin yaw)... ekranda sağ = -X'e yakın, bu yüzden aşağıdaki formül */
+  const rp = p => { const dx = p[0] - player.pos[0], dz = p[2] - player.pos[2]; const fw = dx * Math.sin(a) + dz * Math.cos(a), rt = -(dx * Math.cos(a) - dz * Math.sin(a)); return [cx + rt * k, cy - fw * k]; };
+  g.fillStyle = 'rgba(125,135,128,.38)';
+  for (const b of city.buildings) {
+    if (b.alive <= 0 || Math.hypot(b.cx - player.pos[0], b.cz - player.pos[2]) > range * 1.3) continue;
+    const q = b.bb, c = [[q[0], q[2]], [q[3], q[2]], [q[3], q[5]], [q[0], q[5]]].map(o => rp([o[0], 0, o[1]]));
+    g.beginPath(); g.moveTo(c[0][0], c[0][1]); for (let i = 1; i < 4; i++) g.lineTo(c[i][0], c[i][1]); g.closePath(); g.fill();
+  }
+  g.strokeStyle = 'rgba(227,169,59,.35)'; const fov = cam.fov * DEG * 0.9 * (vw / vh) / 2;
+  g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx + Math.sin(fov) * R, cy - Math.cos(fov) * R); g.moveTo(cx, cy); g.lineTo(cx - Math.sin(fov) * R, cy - Math.cos(fov) * R); g.stroke();
+  for (const e of enemies) {
+    const p = rp(e.pos), d = Math.hypot(p[0] - cx, p[1] - cy), s = d > R ? R / d : 1, x = cx + (p[0] - cx) * s, y = cy + (p[1] - cy) * s;
+    g.fillStyle = e.dead ? '#4b5256' : COL.red; g.beginPath(); g.arc(x, y, e.dead ? 3 : 4.5, 0, 7); g.fill();
+    if (!e.dead && s === 1) { g.strokeStyle = COL.red; g.stroke(); }
+    if (!e.dead) { refresh(e); const q = rp(vadd(e.pos, vmul(e.gunDir, 200))); g.strokeStyle = 'rgba(218,86,64,.55)'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (q[0] - p[0]) * 0.15 * s, y + (q[1] - p[1]) * 0.15 * s); g.stroke(); }
+  }
+  const hq = rp(vadd(player.pos, vmul(mv(player.R, [0, 0, 1]), 60)));
+  g.fillStyle = COL.green; g.save(); g.translate(cx, cy);
+  const hv = [hq[0] - cx, hq[1] - cy], hl = Math.hypot(hv[0], hv[1]) || 1; g.rotate(Math.atan2(hv[0] / hl, -hv[1] / hl));
+  g.beginPath(); g.moveTo(0, -8); g.lineTo(5, 6); g.lineTo(-5, 6); g.closePath(); g.fill(); g.restore();
+  g.fillStyle = '#6b7a74'; g.font = '10px "IBM Plex Mono",monospace'; g.textAlign = 'left'; g.fillText('K', cx + 4, cy - R + 10);
+}
+
+/* ---------- Günlük ve HUD ---------- */
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+function renderLog() {
+  if (!logList.length) { $('log').innerHTML = '<li class="empty">Henüz isabet yok.</li>'; return; }
+  $('log').innerHTML = logList.map(r => {
+    const oc = r.outcome || '', cls = /Sekti/.test(oc) ? 'o-ric' : (/deldi|Delip|patladı|içeride|Namlu/i.test(oc) && !/Delemedi|dışarıda/.test(oc) ? 'o-pen' : 'o-def');
+    const lines = r.lines.slice(0, 8);
+    return '<li><div class="hd"><span>' + esc(SHELL[r.shell].name) + ' → ' + esc(r.tank.name) + '</span><em class="' + cls + '">' + esc(oc) + '</em></div>' +
+      lines.map(l => '<div class="ln">' + esc(l) + '</div>').join('') + (r.lines.length > 8 ? '<div class="ln">…</div>' : '') + r.dmg.map(d => '<div class="dm">' + esc(d) + '</div>').join('') + '</li>';
+  }).join('');
+}
+const chipCache = {};
+function chipsFor(t) {
+  const out = [];
+  for (const m of t.mods) {
+    let st = m.state; if (m.kind === 'gun') st = t.gunOK ? (m.hp < 70 ? 'hurt' : 'ok') : 'dead'; if (m.kind === 'optics') st = t.optOK ? 'ok' : 'dead';
+    if (t.turretGone && m.parent === 'turret') st = 'dead';
+    out.push('<span class="chip ' + st + '">' + esc(m.name.replace('Yalıtımlı mühimmat bölmesi', 'Mühimmat (yalıtımlı)').replace('Kule arka mühimmat', 'Mühimmat (kule)').replace('Mermi karuseli', 'Karusel')) + '</span>');
+  }
+  out.push('<span class="chip ' + (t.trackOK ? 'ok' : 'dead') + '">Palet</span>');
+  out.push('<span class="chip ' + (t.gunOK ? 'ok' : 'dead') + '">Namlu</span>');
+  return out.join('');
+}
+function updateHud() {
+  const p = player;
+  for (const b of document.querySelectorAll('#ammo button')) b.setAttribute('aria-pressed', b.dataset.ammo === p.sel ? 'true' : 'false');
+  $('amAp').textContent = p.ammo.ap; $('amHeat').textContent = p.ammo.heat; $('amHe').textContent = p.ammo.he;
+  const tot = p.reloadTime * reloadFactor(p);
+  $('rlBar').style.width = (p.reloadT > 0 ? (1 - p.reloadT / tot) * 100 : 100) + '%';
+  $('rlTxt').textContent = p.dead ? 'Devre dışı' : p.reloadT > 0 ? 'Otomatik yükleyici ' + p.reloadT.toFixed(1) + ' s' : 'Hazır';
+  const ge = gunnerEff(p), de = driverEff(p);
+  $('gunTxt').textContent = !p.gunOK ? 'NAMLU HASARLI' : !canFire(p) && !p.repair && !p.dead ? 'NİŞANCI YOK' : ge < 0.99 && ge > 0 ? (p.mods.find(m => m.role === 'gunner').hp <= 0 ? 'KOMUTAN NİŞAN ALIYOR' : 'NİŞANCI YARALI') : !p.optOK ? 'NİŞANGÂH BOZUK' : de < 0.99 && de > 0 ? 'SÜRÜCÜ KAYIP/YARALI' : '';
+  { const rb = $('rpBtn'); let tx, cl = '';
+    if (p.dead) tx = 'Tamir (R)'; else if (p.repair) { tx = 'TAMİR ' + Math.max(0, p.repair.dur - p.repair.t).toFixed(1) + ' s (R: iptal)'; cl = 'work'; }
+    else if (p.repairCd > 0) tx = 'Tamir ' + Math.ceil(p.repairCd) + ' s'; else { tx = needsRepair(p) ? 'TAMİR HAZIR · R' : 'Tamir hazır (hasar yok)'; cl = needsRepair(p) ? 'ready' : ''; }
+    if (rb.textContent !== tx) rb.textContent = tx; if (rb.className !== 'btn ' + cl) rb.className = 'btn ' + cl; }
+  const tgt = aimInfo.target || selTarget || enemies.filter(e => !e.dead).sort((a, b) => vlen(vsub(a.pos, p.pos)) - vlen(vsub(b.pos, p.pos)))[0] || enemies[0];
+  selTarget = tgt || selTarget;
+  $('rng').textContent = Math.round(aimInfo.dist) + ' m';
+  $('enName').textContent = aimInfo.target ? aimInfo.target.name : (tgt ? 'En yakın: ' + Math.round(vlen(vsub(tgt.pos, p.pos))) + ' m' : 'Hedef');
+  $('enState').textContent = !tgt ? '' : tgt.dead ? 'İMHA' : tgt.fire ? 'YANIYOR' : !tgt.trackOK ? 'PALET KOPTU' : !tgt.gunOK ? 'NAMLU HASARLI' : '';
+  $('wave').textContent = wave; $('kills').textContent = kills; $('spd').textContent = Math.round(Math.abs(p.speed) * 3.6);
+  $('stEn').textContent = tgt ? tgt.name : 'Hedef';
+  const hp = chipsFor(p), he = tgt ? chipsFor(tgt) : '';
+  if (chipCache.p !== hp) { $('stP').innerHTML = hp; chipCache.p = hp; }
+  if (chipCache.e !== he) { $('stE').innerHTML = he; chipCache.e = he; }
+  $('fP').textContent = p.fire ? 'Yangın var' + (p.dead ? '' : ', söndürme deneniyor') : '';
+  $('fE').textContent = tgt && tgt.fire ? 'Yangın var' : '';
+  const fh = feed.filter(f => f.t > 0).map(f => '<div>' + esc(f.msg) + '</div>').join('');
+  if (chipCache.f !== fh) { $('hudBL').innerHTML = fh; chipCache.f = fh; }
+  if (logDirty) { renderLog(); logDirty = false; }
+  $('flash').style.opacity = String(Math.max(0, flashT)); flashT -= 0.03;
+}
+
+/* ---------- Girdi ---------- */
+function doRepair() {
+  if (!player || player.dead || over) return;
+  if (player.repair) { player.repair = null; addFeed('Tamir iptal edildi'); return; }
+  if (player.repairCd > 0) { addFeed('Tamir ekibi ' + Math.ceil(player.repairCd) + ' s sonra hazır'); return; }
+  if (!needsRepair(player)) { addFeed('Tamir gerektiren hasar yok'); return; }
+  if (Math.abs(player.speed) > 1.5) { addFeed('Tamir için durun'); return; }
+  startRepair(player, world);
+}
+function selAmmo(k) { if (player && !player.dead) player.sel = k; }
+function begin() {
+  if (started) return; started = true; $('hint').style.display = 'none';
+}
+function tryLock() { try { const r = cvs.requestPointerLock && cvs.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+const KEYMAP = { KeyW: 'fwd', ArrowUp: 'fwd', KeyS: 'back', ArrowDown: 'back', KeyA: 'left', ArrowLeft: 'left', KeyD: 'right', ArrowRight: 'right', Space: 'fire' };
+let shiftDown = false, sightLatch = false, lastTouchT = -1e9;
+addEventListener('keydown', e => {
+  const c = e.code;
+  // Tank seçimi gibi bir form kontrolü odaktayken de WASD/ok tuşları çalışsın.
+  // Aksi halde T-72 seçildikten sonra odak select üzerinde kaldığında hareket kilitleniyordu.
+  if (e.target && /SELECT|INPUT|TEXTAREA/.test(e.target.tagName) && !KEYMAP[c]) return;
+  if (KEYMAP[c]) { input[KEYMAP[c]] = true; if (c === 'Space' || c.startsWith('Arrow')) e.preventDefault(); if (!started) begin(); }
+  else if (c === 'KeyX') { if (!e.repeat) toggleX(); }
+  else if (c === 'KeyR') { if (!e.repeat) doRepair(); }
+  else if (c === 'Digit1' || c === 'Numpad1') selAmmo('ap'); else if (c === 'Digit2' || c === 'Numpad2') selAmmo('heat'); else if (c === 'Digit3' || c === 'Numpad3') selAmmo('he');
+  else if (c === 'ShiftLeft' || c === 'ShiftRight') shiftDown = true;
+  else if (c === 'KeyC' || c === 'KeyV') { if (!e.repeat) sightLatch = !sightLatch; }
+});
+addEventListener('keyup', e => { const c = e.code; if (KEYMAP[c]) input[KEYMAP[c]] = false; if (c === 'ShiftLeft' || c === 'ShiftRight') shiftDown = false; });
+addEventListener('blur', () => { shiftDown = false; input.fire = input.fwd = input.back = input.left = input.right = false; });
+document.addEventListener('pointerlockchange', () => { locked = document.pointerLockElement === cvs; });
+cvs.addEventListener('mousemove', e => {
+  const r = cvs.getBoundingClientRect(); input.mx = (e.clientX - r.left) / r.width * 2 - 1; input.my = (e.clientY - r.top) / r.height * 2 - 1; input.inside = true;
+  if (locked) { const s = sightOn ? 0.0007 : 0.0022; cam.yaw -= e.movementX * s; cam.pitch = clamp(cam.pitch - e.movementY * s, -0.45, 0.6); }
+});
+cvs.addEventListener('mouseleave', () => { input.inside = false; });
+let dragPrev = null;
+cvs.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') { dragPrev = [e.clientX, e.clientY]; lastTouchT = performance.now(); begin(); } });
+cvs.addEventListener('mousedown', e => {
+  if (performance.now() - lastTouchT < 800) return;
+  if (e.button === 0) { if (!started) { begin(); tryLock(); return; } if (!locked) tryLock(); input.fire = true; }
+  else if (e.button === 2) sightLatch = !sightLatch;
+});
+addEventListener('mouseup', e => { if (e.button === 0) input.fire = false; });
+cvs.addEventListener('pointermove', e => { if (e.pointerType === 'touch' && dragPrev) { cam.yaw -= (e.clientX - dragPrev[0]) * 0.006; cam.pitch = clamp(cam.pitch - (e.clientY - dragPrev[1]) * 0.005, -0.45, 0.6); dragPrev = [e.clientX, e.clientY]; } });
+addEventListener('pointerup', () => { dragPrev = null; });
+cvs.addEventListener('contextmenu', e => e.preventDefault());
+$('hint').addEventListener('pointerdown', e => { e.preventDefault(); lastTouchT = e.pointerType === 'touch' ? performance.now() : lastTouchT; begin(); tryLock(); });
+for (const b of document.querySelectorAll('#ammo button')) b.addEventListener('click', () => selAmmo(b.dataset.ammo));
+for (const b of document.querySelectorAll('#touch [data-hold]')) {
+  const k = b.dataset.hold;
+  b.addEventListener('pointerdown', e => { e.preventDefault(); input[k] = true; begin(); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, () => { input[k] = false; });
+}
+for (const b of document.querySelectorAll('#touch [data-act]')) b.addEventListener('click', () => {
+  if (b.dataset.act === 'sight') sightLatch = !sightLatch; else { const o = ['ap', 'heat', 'he']; selAmmo(o[(o.indexOf(player.sel) + 1) % 3]); }
+});
+function toggleX() { xray = !xray; $('btnX').setAttribute('aria-pressed', xray ? 'true' : 'false'); for (const t of world.tanks) applyXray(t); }
+$('btnX').addEventListener('click', toggleX);
+$('btnNew').addEventListener('click', newGame);
+$('rpBtn').addEventListener('click', e => { e.preventDefault(); doRepair(); });
+$('tankSel').addEventListener('change', e => { playerKey = e.target.value; newGame(); });
+$('enemySel').addEventListener('change', e => { enemyKey = e.target.value; newGame(); });
+$('bnBtn').addEventListener('click', () => { newGame(); });
+$('diff').addEventListener('change', e => { diff = +e.target.value; });
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(resize).observe(view); else addEventListener('resize', resize);
+
+/* ---------- Döngü ---------- */
+let last = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+  if (slowT > 0) { slowT -= dt; timeScale = lerp(timeScale, 0.22, 0.25); } else timeScale = lerp(timeScale, 1, 0.12);
+  /* fare konumuyla dönüş (kilit yoksa) */
+  if (started && !locked && input.inside) {
+    const dz = 0.2, nx = input.mx, ny = input.my;
+    if (Math.abs(nx) > dz) cam.yaw -= Math.sign(nx) * (Math.abs(nx) - dz) * 1.7 * dt * (sightOn ? 0.3 : 1);
+    if (Math.abs(ny) > dz) cam.pitch = clamp(cam.pitch - Math.sign(ny) * (Math.abs(ny) - dz) * 0.9 * dt * (sightOn ? 0.3 : 1), -0.45, 0.6);
+  }
+  if (!started) cam.yaw += dt * 0.05;
+  sightOn = shiftDown || sightLatch;
+  computeAim();
+  if (started) { acc += dt * timeScale; let n = 0; while (acc >= STEP && n++ < 24) { stepWorld(STEP); acc -= STEP; } }
+  else { for (const t of world.tanks) updatePose(t, terrain, false); updParts(dt); }
+  for (const t of world.tanks) syncTank(t);
+  processCityEvents(); updDebris(dt * timeScale); citySmoke(dt);
+  updShellViews(dt); updHitViz(dt); updateCamera(dt);
+  renderer.render(scene, camera);
+  drawOverlay(); drawRadar(); updateHud();
+  requestAnimationFrame(frame);
+}
+resize(); newGame();
+requestAnimationFrame(frame);
+window.__g = { get camera() { return camera; }, get terrain() { return terrain; }, adv(sec) { const n = Math.round(sec / 0.1); for (let i = 0; i < n; i++) { computeAim(); for (let k = 0; k < 12; k++) stepWorld(STEP); processCityEvents(); updDebris(0.1); } }, get world() { return world; }, get player() { return player; }, get enemies() { return enemies; }, stats, input, cam, begin, get aim() { return aimInfo; }, setX: v => { if (xray !== v) toggleX(); }, get shake() { return shake; }, get city() { return city; }, get views() { return tankViews; } };
+})();
+</script>
+
+</body></html>
